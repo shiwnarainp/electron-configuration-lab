@@ -1,0 +1,672 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Electron Configuration Lab</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Lexend:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: a night lab bench. A module rail across the top, then each station pairs a live atom (left) with a worksheet panel (right); stacks to one column on Chromebooks in portrait and phones. Deliberately single dark theme. */
+:root{
+  color-scheme:dark;
+  --bg:#0b1322; --bg2:#0f192c; --panel:#132037; --panel2:#192943; --ink:#eaf0f8; --muted:#9daac0; --line:#28395a;
+  --accent:#ffc857; --accent-ink:#1d1400; --glow:rgba(255,200,87,.25);
+  --pro:#ff5a5f; --neu:#4f8dff; --ele:#c9d1dd;
+  --ok:#4fd18b; --ok-soft:#12321f; --no:#ff7b7b; --no-soft:#3b1b20; --warn-soft:#3a2e12;
+  --display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --body:"Lexend",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --r:12px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:radial-gradient(1000px 520px at 85% -8%,#1a2c50 0%,transparent 62%),var(--bg);background-color:var(--bg);color:var(--ink);font-family:var(--body);font-size:16.5px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 56px}
+.wrap{max-width:1180px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);line-height:1.12;text-wrap:balance;margin:0}
+h1{font-size:clamp(2rem,4.4vw,3rem);font-weight:800;letter-spacing:-.02em}
+h2{font-size:1.55rem;font-weight:800;letter-spacing:-.01em}
+h3{font-size:1.1rem;font-weight:800}
+p{margin:0}
+.eyebrow{font-family:var(--mono);font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+.muted{color:var(--muted)} .small{font-size:.88rem}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-ink);font-weight:700;padding:8px 14px;border-radius:9px;cursor:pointer;line-height:1.2}
+.btn:hover{box-shadow:0 0 0 4px var(--glow)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{border-color:var(--accent)}
+.btn.ghost[aria-pressed="true"]{border-color:var(--accent);background:var(--glow)}
+.btn.sm{padding:5px 10px;font-size:.86rem}
+.btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.stack{display:grid;gap:14px}
+select,input[type=text],input:not([type]){background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-width:0}
+input[type=text],input:not([type]){font-family:var(--mono);font-size:1.02rem;width:100%}
+input.ok{border-color:var(--ok);background:var(--ok-soft);color:var(--ok);font-weight:700}
+input.no{border-color:var(--no);background:var(--no-soft)}
+input:disabled{opacity:1}
+textarea{width:100%;min-height:160px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:10px;font-family:var(--mono);font-size:.84rem;color:var(--ink)}
+
+.top{padding-block:24px 4px}
+.top .wrap{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;justify-content:space-between}
+.top .sub{color:var(--muted);max-width:62ch}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.goals{margin-top:16px;border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:10px 16px}
+.goals summary{cursor:pointer;font-weight:700}
+.goals .g{display:grid;gap:10px;margin-top:10px;max-width:80ch}
+.goals ol{margin:4px 0 0;padding-left:22px}
+.rail{display:flex;gap:6px;overflow-x:auto;margin-top:16px;padding-bottom:4px}
+.rail button{flex:none;display:grid;gap:1px;text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:8px 12px;cursor:pointer;min-width:120px}
+.rail button .n{font-family:var(--mono);font-size:.7rem;color:var(--muted)}
+.rail button .t{font-weight:700;font-size:.92rem}
+.rail button[aria-current="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
+.rail button.done .n{color:var(--ok)}
+.progress{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px}
+.progress .bar{flex:1 1 220px;height:8px;background:var(--line);border-radius:99px;overflow:hidden}
+.progress .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--ok))}
+.progress .lbl{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+
+main section{display:grid;gap:18px;margin-top:22px}
+.shead{display:flex;flex-wrap:wrap;gap:14px;justify-content:space-between;align-items:flex-start}
+.shead .t{display:grid;gap:6px;max-width:74ch}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:18px;display:grid;gap:12px;align-content:start;min-width:0}
+.card.alt{background:var(--panel2)}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px}
+.grid2.l{grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr)}
+@media (max-width:880px){.grid2,.grid2.l{grid-template-columns:minmax(0,1fr)}}
+.note{border-left:4px solid var(--accent);background:var(--bg2);padding:10px 14px;border-radius:0 8px 8px 0}
+.note.mis{border-left-color:var(--no)}
+.note.ok{border-left-color:var(--ok)}
+.keyidea{border:1px dashed var(--accent);border-radius:8px;padding:8px 12px;font-size:.94rem}
+.fb{min-height:1.4em;font-weight:700}
+.fb.ok{color:var(--ok)} .fb.no{color:var(--no)}
+.hint{background:var(--warn-soft);padding:8px 12px;border-radius:8px}
+.badge{display:inline-block;font-family:var(--mono);font-size:.74rem;padding:2px 8px;border-radius:99px;border:1px solid var(--line);white-space:nowrap}
+.badge.ok{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.badge.no{background:var(--no-soft);color:var(--no);border-color:transparent}
+.starter{font-size:.88rem;color:var(--muted);font-style:italic}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{border:1px solid var(--line);padding:6px 10px;text-align:center}
+thead th{background:var(--panel2)}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:.86rem}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:5px}
+.dot.p{background:var(--pro)} .dot.n{background:var(--neu)} .dot.e{background:var(--ele)}
+.caption{font-size:.83rem;color:var(--muted)}
+
+/* atom */
+.stage{background:radial-gradient(circle at 50% 46%,#1c2e52,var(--bg2) 72%);border:1px solid var(--line);border-radius:var(--r);display:grid;place-items:center;padding:6px;position:relative;touch-action:none}
+svg.atom{width:100%;max-width:400px;height:auto;display:block}
+svg.atom .shell{fill:none;stroke:rgba(201,209,221,.32);stroke-width:1.4;stroke-dasharray:4 5}
+svg.atom .shell.hi{stroke:var(--accent);stroke-width:3;stroke-dasharray:none;filter:drop-shadow(0 0 6px rgba(255,200,87,.6))}
+svg.atom .hit{fill:transparent;stroke:transparent;stroke-width:26;cursor:pointer}
+svg.atom .e circle{fill:var(--ele);stroke:#0b1322;stroke-width:1.5}
+svg.atom .e text{fill:#0b1322;font:700 9px var(--mono),monospace;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+svg.atom .e.picked circle{stroke:var(--accent);stroke-width:3.5}
+svg.atom .e.click{cursor:pointer}
+svg.atom .nl{font:600 10px var(--mono),monospace;fill:#9daac0}
+svg.atom .pop{animation:pop .35s ease-out}
+@keyframes pop{from{transform:scale(.2);opacity:0}to{transform:none;opacity:1}}
+body.still *{animation:none!important;transition:none!important}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* periodic table */
+.ptwrap{overflow-x:auto}
+.pt{display:grid;grid-template-columns:repeat(18,minmax(32px,1fr));gap:3px;min-width:600px}
+.pt button{border:1px solid var(--line);border-radius:5px;background:var(--panel2);display:grid;place-items:center;padding:3px 0;line-height:1.05;cursor:pointer;aspect-ratio:1/1.08}
+.pt button .z{font-family:var(--mono);font-size:.56rem;color:var(--muted)} .pt button .s{font-weight:700;font-size:.9rem}
+.pt button.dim{opacity:.55}
+.pt button.hi{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)} .pt button.hi .z{color:var(--accent-ink)}
+.pt button.seen{border-color:var(--ok)}
+.pt .gl{font-family:var(--mono);font-size:.6rem;color:var(--muted);text-align:center;align-self:end}
+
+/* readouts */
+.readout{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.ro{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;display:grid;gap:2px}
+.ro span{font-size:.76rem;color:var(--muted)} .ro b{font-family:var(--mono);font-size:1.2rem}
+.cfg{font-family:var(--mono);font-size:1.5rem;font-weight:700;letter-spacing:.02em}
+.cfg.sub{font-size:1.15rem}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:10px}
+.fld{display:grid;gap:4px;font-size:.84rem;color:var(--muted);font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:5px 10px;cursor:pointer;font-weight:700;font-size:.88rem}
+.chips button[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
+.chips button.done{border-color:var(--ok);color:var(--ok)}
+
+/* builder */
+.bank{display:flex;flex-wrap:wrap;gap:6px;min-height:36px;align-items:center;padding:8px;border:1px dashed var(--line);border-radius:10px;background:var(--bg2)}
+.etok{width:26px;height:26px;border-radius:50%;background:var(--ele);color:#0b1322;display:grid;place-items:center;font:700 13px var(--mono),monospace;cursor:grab;touch-action:none;user-select:none;border:2px solid #0b1322}
+.ghost-e{position:fixed;z-index:50;pointer-events:none;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;background:var(--ele);border:2px solid var(--accent);box-shadow:0 0 14px var(--glow)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;flex-wrap:wrap}
+.seg button{border:0;background:none;padding:7px 12px;cursor:pointer;font-weight:700;font-size:.88rem}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.counts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.counts div{background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:6px 8px;text-align:center}
+.counts div.sel{border-color:var(--accent)}
+.counts b{font-family:var(--mono);font-size:1.15rem;display:block}
+.counts span{font-size:.72rem;color:var(--muted)}
+
+/* MC */
+fieldset.mc{border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;display:grid;gap:6px;margin:0;min-width:0}
+fieldset.mc legend{font-weight:700;padding:0 6px}
+.opt{display:flex;gap:10px;align-items:flex-start;padding:6px 8px;border-radius:8px;cursor:pointer}
+.opt:hover{background:var(--panel2)}
+.opt input{margin-top:5px;accent-color:var(--accent);flex:none}
+
+/* orbitals */
+.orbgrid{display:grid;gap:8px}
+.orow{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:10px;align-items:center}
+.orow .lb{font-family:var(--mono);font-weight:700}
+.orow .lb sup{font-size:.7em}
+.boxes{display:flex;flex-wrap:wrap;gap:4px}
+.ob{width:42px;height:42px;border:2px solid var(--line);border-radius:6px;background:var(--bg2);display:grid;place-items:center;font-size:1.25rem;font-weight:700;color:var(--ele);font-family:var(--mono);letter-spacing:-2px}
+button.ob{cursor:pointer}
+button.ob:hover{border-color:var(--accent)}
+.ob.cur{border-color:var(--accent);box-shadow:0 0 10px var(--glow)}
+.orow .cnt{font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+.seq{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-family:var(--mono);font-weight:700}
+.seq span{padding:4px 8px;border:1px solid var(--line);border-radius:6px}
+.seq span.full{border-color:var(--ok);color:var(--ok)}
+.seq span.cur{border-color:var(--accent);background:var(--glow)}
+.seq i{color:var(--muted);font-style:normal}
+.rules{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.rules{grid-template-columns:minmax(0,1fr)}}
+.miniorb{display:inline-grid;gap:3px;font-family:var(--mono);font-size:.82rem}
+.miniorb .r{display:flex;gap:3px;align-items:center}
+.miniorb .r b{width:26px}
+.miniorb .ob{width:30px;height:30px;font-size:.95rem}
+
+/* detective & final */
+.clue{display:grid;grid-template-columns:minmax(0,200px) minmax(0,1fr);gap:16px;align-items:center}
+@media (max-width:560px){.clue{grid-template-columns:minmax(0,1fr)}}
+.clue .vis{background:var(--bg2);border:1px solid var(--line);border-radius:10px;display:grid;place-items:center;min-height:140px;padding:6px}
+.clue .vis svg{width:100%;max-width:190px}
+.dots{display:flex;flex-wrap:wrap;gap:5px}
+.dots span{width:24px;height:24px;border-radius:6px;display:grid;place-items:center;font-family:var(--mono);font-size:.7rem;border:1px solid var(--line)}
+.dots span.ok{background:var(--ok-soft);color:var(--ok);border-color:var(--ok)} .dots span.no{background:var(--no-soft);color:var(--no);border-color:var(--no)} .dots span.cur{border-color:var(--accent)}
+.fq{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);padding:14px 16px;display:grid;gap:10px;min-width:0}
+.fq.ok{border-color:var(--ok)} .fq.no{border-color:var(--no)}
+.fq .qh{display:flex;gap:10px;justify-content:space-between;align-items:baseline;flex-wrap:wrap}
+.fq .qn{font-family:var(--mono);color:var(--accent);font-weight:700}
+.fq .exp{background:var(--no-soft);border-radius:8px;padding:8px 12px;font-size:.92rem}
+.fq .qimg svg{width:170px;height:170px}
+.scoreline{font-family:var(--display);font-size:2.2rem;font-weight:800}
+.qchips{display:flex;flex-wrap:wrap;gap:6px}
+.qchips button{width:40px;height:34px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-family:var(--mono);font-weight:700}
+.qchips button.ok{color:var(--ok);border-color:var(--ok)} .qchips button.no{color:var(--no);border-color:var(--no)}
+.vocab{position:fixed;top:0;right:0;bottom:0;width:min(380px,92vw);z-index:40;background:var(--panel);border-left:1px solid var(--line);box-shadow:-10px 0 40px rgba(0,0,0,.5);overflow:auto;
+  padding:calc(18px + env(safe-area-inset-top,0px)) max(18px,env(safe-area-inset-right,0px)) calc(18px + env(safe-area-inset-bottom,0px)) 18px;display:grid;gap:10px;align-content:start}
+.vocab dl{display:grid;gap:8px;margin:0} .vocab dt{font-weight:700;color:var(--accent)} .vocab dd{margin:0 0 4px}
+.ion{display:grid;gap:8px;text-align:center}
+.ion .stage svg{max-width:240px}
+.ions{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+@media print{body{background:#fff;color:#000}.top,.rail,.progress,.goals,#views>*:not(.printable){display:none}}
+</style>
+
+<header class="top"><div class="wrap">
+  <div class="stack" style="gap:6px">
+    <p class="eyebrow">Regents Chemistry · Electron arrangement</p>
+    <h1>Electron Configuration Lab</h1>
+    <p class="sub">Build, arrange, and discover electrons: shells like 2-8-1, valence electrons, periodic patterns, and subshells like 1s² 2s² 2p⁶ 3s¹.</p>
+  </div>
+  <div class="tools">
+    <label class="small muted" for="lvlSel">Level</label>
+    <select id="lvlSel" aria-label="Proficiency level"><option value="1">Beginning</option><option value="2">Developing</option><option value="3">Approaching</option><option value="4">Proficient</option></select>
+    <button class="btn ghost sm" id="speakBtn">Read aloud</button>
+    <button class="btn ghost sm" id="motionBtn" aria-pressed="false">Reduce motion: off</button>
+    <button class="btn ghost sm" id="vocabBtn" aria-expanded="false" aria-controls="vocab">Glossary</button>
+  </div>
+</div></header>
+
+<main class="wrap">
+  <details class="goals">
+    <summary>Learning goals</summary>
+    <div class="g">
+      <p><b>Essential question:</b> How are electrons arranged in atoms, and how does their arrangement influence the properties of elements?</p>
+      <p><b>Today I will</b> investigate how electrons are distributed among energy levels and orbitals. <b>So I can</b> write electron configurations, determine valence electrons, and identify elements from their electron arrangements.</p>
+      <div><b>I am successful when I can:</b><ol>
+        <li>Find the number of electrons in a neutral atom from its atomic number.</li><li>Describe how electrons occupy principal energy levels.</li><li>Write shell configurations for the first 20 elements.</li>
+        <li>Find the number of electrons in each occupied shell.</li><li>Identify valence electrons of main-group elements.</li><li>Explain configuration patterns across periods and down groups.</li>
+        <li>Identify elements from electron configurations.</li><li>Write basic subshell configurations.</li><li>Apply the Aufbau principle, Hund’s rule, and the Pauli exclusion principle to orbital diagrams.</li><li>Relate electron arrangement to the organization of the periodic table.</li></ol></div>
+      <p class="small muted">NYSSLS HS-PS1-1: atomic structure, outermost electron states, and periodic patterns.</p>
+    </div>
+  </details>
+  <nav class="rail" id="rail" aria-label="Modules"></nav>
+  <div class="progress" id="progress"></div>
+  <div id="views"></div>
+</main>
+
+<aside class="vocab" id="vocab" hidden aria-label="Glossary">
+  <div class="row" style="justify-content:space-between"><h3>Glossary</h3><button class="btn ghost sm" id="vocabClose">Close</button></div>
+  <dl id="vocabList"></dl>
+</aside>
+
+<script>
+(function(){
+"use strict";
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const PI=Math.PI;
+
+/* ---------- element data ---------- */
+const SYM=['','H','He','Li','Be','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Ga','Ge','As','Se','Br','Kr'];
+const NAME=['','Hydrogen','Helium','Lithium','Beryllium','Boron','Carbon','Nitrogen','Oxygen','Fluorine','Neon','Sodium','Magnesium','Aluminum','Silicon','Phosphorus','Sulfur','Chlorine','Argon','Potassium','Calcium','Scandium','Titanium','Vanadium','Chromium','Manganese','Iron','Cobalt','Nickel','Copper','Zinc','Gallium','Germanium','Arsenic','Selenium','Bromine','Krypton'];
+const MASS=[0,1,4,7,9,11,12,14,16,19,20,23,24,27,28,31,32,35,40,39,40,45,48,51,52,55,56,59,59,64,65,70,73,75,79,80,84];
+function pos(z){if(z===1)return[1,1];if(z===2)return[1,18];if(z<=10)return[2,z<=4?z-2:z+8];if(z<=18)return[3,z<=12?z-10:z];return[4,z-18]}
+const group=z=>pos(z)[1],period=z=>pos(z)[0];
+function shells(e){if(e<=0)return[];if(e<=2)return[e];if(e<=10)return[2,e-2];if(e<=18)return[2,8,e-10];
+  if(e<=36){const T3=[8,8,9,10,11,13,13,14,15,16,18,18,18,18,18,18,18,18],T4=[1,2,2,2,2,1,2,2,2,2,1,2,3,4,5,6,7,8];const i=e-19;return[2,8,T3[i],T4[i]]}return[2,8,18,8]}
+const cfgStr=z=>shells(z).join('-');
+const valence=z=>z===2?2:shells(z)[shells(z).length-1];
+const CAP=[2,8,18,32];
+const ORD=[['1s',2],['2s',2],['2p',6],['3s',2],['3p',6],['4s',2],['3d',10],['4p',6],['5s',2]];
+const NORB={s:1,p:3,d:5,f:7};
+function subcfg(z){const out=[];let e=z;for(const[l,c]of ORD){if(e<=0)break;const k=Math.min(c,e);out.push([l,k]);e-=k}
+  if(z===24)return out.map(([l,k])=>[l,l==='4s'?1:l==='3d'?5:k]);if(z===29)return out.map(([l,k])=>[l,l==='4s'?1:l==='3d'?10:k]);return out}
+const SUP={'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹'};
+const fmtSub=arr=>arr.map(([l,k])=>l+String(k).replace(/\d/g,d=>SUP[d])).join(' ');
+const unsup=s=>String(s).replace(/[⁰¹²³⁴⁵⁶⁷⁸⁹]/g,c=>'0123456789'['⁰¹²³⁴⁵⁶⁷⁸⁹'.indexOf(c)]);
+function parseSub(s){const t=unsup(s).toLowerCase().replace(/\^/g,'');const m=[...t.matchAll(/([1-7])\s*([spdf])\s*(\d{1,2})/g)];const left=t.replace(/([1-7])\s*([spdf])\s*(\d{1,2})/g,'').replace(/[\s,]/g,'');return{tok:m.map(x=>x[1]+x[2]+x[3]),junk:left.length>0}}
+function subMatch(s,z){const{tok,junk}=parseSub(s);if(junk||!tok.length)return false;const want=subcfg(z).map(([l,k])=>l+k).sort().join();return tok.slice().sort().join()===want}
+function normCfg(s){return String(s).trim().replace(/[–—−,;:\s]+/g,'-').replace(/-+/g,'-').replace(/^-|-$/g,'')}
+const groupOk=(z,g)=>g===group(z);
+
+/* ---------- state ---------- */
+const KEY='e-config-lab-v1';
+const DEF=()=>({v:1,view:'m1',level:2,still:false,
+  m1:{sel:8,pred:{},disc:null,quiz:null,qa:{},qok:{}},
+  m2:{z:3,sh:[0,0,0,0],selShell:0,done:{},hint:0,cap:{},capOk:false},
+  m3:{z:15,st:{}},
+  m4:{z:17,picked:[],q1:null,q1ok:false,per:{},perOk:false,grp:null,ch:{},chOk:false},
+  m5:{az:11,astep:0,oz:7,ob:{},odone:{},sTxt:'',sOk:false,sob:{},sDiagOk:false,mc:null},
+  m6:{list:null,i:0,st:{},res:{},streak:0},
+  m7:{e:{},done:{},mc:null},
+  fin:{seed:1,ans:{},res:null,retry:false,name:''}});
+function load(){const d=DEF();try{const s=JSON.parse(localStorage.getItem(KEY)||'null');if(s&&s.v===1)for(const k in d){if(s[k]!==undefined)d[k]=(d[k]&&typeof d[k]==='object'&&!Array.isArray(d[k]))?Object.assign(d[k],s[k]):s[k]}}catch(e){}return d}
+let S=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const motionOK=()=>!S.still&&!matchMedia('(prefers-reduced-motion: reduce)').matches;
+function rng(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=a;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+function sshuf(n,seed){const r=rng([...String(seed)].reduce((a,c)=>(a*31+c.charCodeAt(0))>>>0,7));const a=[...Array(n).keys()];for(let i=n-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const shuffle=(a,r=Math.random)=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const num=v=>{const t=String(v==null?'':v).trim();return /^\d+$/.test(t)?+t:NaN};
+
+/* ---------- drawing ---------- */
+const RAD=[44,80,116,152];
+function nucleus(p,n,R=24){const N=p+n;if(!N)return'';const pr=Math.min(5.5,R/Math.sqrt(N)*.95),c=pr*1.1,a=[];let pc=0;for(let i=0;i<N;i++){const w=Math.round((i+1)*p/N);if(w>pc){a.push(1);pc++}else a.push(0)}
+  let s='';for(let i=N-1;i>=0;i--){const r=c*Math.sqrt(i+.5),t=i*2.39996;s+=`<circle cx="${(r*Math.cos(t)).toFixed(1)}" cy="${(r*Math.sin(t)).toFixed(1)}" r="${pr.toFixed(1)}" fill="${a[i]?'var(--pro)':'var(--neu)'}" stroke="#0b1322" stroke-width=".6"/>`}return s}
+/* atom: z sets nucleus; sh = electrons per shell; opts: hi (shell index to outline), nShells (rings to draw), click, picked, labels, popShell */
+function atomSVG(z,sh,o={}){const ns=Math.max(o.nShells||0,sh.length);let s='';
+  for(let i=0;i<ns;i++){s+=`<circle class="shell${o.hi===i?' hi':''}" r="${RAD[i]}"/>`;if(o.labels!==false)s+=`<text class="nl" x="${RAD[i]*.72+4}" y="${-RAD[i]*.72-4}">n=${i+1}</text>`;if(o.hit)s+=`<circle class="hit" r="${RAD[i]}" data-shell="${i}"><title>Energy level n = ${i+1}</title></circle>`}
+  s+=`<circle r="27" fill="rgba(255,90,95,.08)"/>${nucleus(z,o.neutrons!=null?o.neutrons:Math.max(0,MASS[z]-z))}`;
+  let idx=0;sh.forEach((cnt,si)=>{for(let j=0;j<cnt;j++){const t=-PI/2+j/cnt*2*PI+si*.35,x=(RAD[si]*Math.cos(t)).toFixed(1),y=(RAD[si]*Math.sin(t)).toFixed(1);const id=si+'-'+j,pk=o.picked&&o.picked.includes(id);
+    s+=`<g class="e${o.click?' click':''}${pk?' picked':''}${o.pop===si&&j===cnt-1?' pop':''}" data-e="${id}" data-sh="${si}" ${o.pop===si&&j===cnt-1?`style="transform-origin:${x}px ${y}px"`:''}><circle cx="${x}" cy="${y}" r="8"/><text x="${x}" y="${y}">−</text></g>`;idx++}});
+  const vb=RAD[Math.max(0,ns-1)]+22;
+  return `<svg class="atom" viewBox="${-vb} ${-vb} ${2*vb} ${2*vb}" role="img" aria-label="${esc(o.label||`Atom model: ${z} protons in the nucleus; electrons ${sh.join('-')||'none'}`)}">${s}</svg>`}
+function ptable(hi,o={}){let h='<div class="pt" role="group" aria-label="Periodic table, elements 1 to 36">';for(let z=1;z<=36;z++){const[r,c]=pos(z);
+  h+=`<button style="grid-row:${r};grid-column:${c}" class="${z===hi?'hi':''} ${o.dimAfter&&z>o.dimAfter?'dim':''} ${o.seen&&o.seen[z]?'seen':''}" data-z="${z}" aria-label="${NAME[z]}, atomic number ${z}" ${o.max&&z>o.max?'disabled':''}><span class="z">${z}</span><span class="s">${SYM[z]}</span></button>`}return h+'</div>'}
+function orbView(occ,o={}){/* occ: {label:[states]} states 0,1(up),2(updown),3(up up invalid) */const labels=o.labels||ORD.slice(0,6).map(x=>x[0]);
+  return `<div class="orbgrid">${labels.map(l=>{const m=NORB[l[1]],st=occ[l]||[];return `<div class="orow"><span class="lb">${l}</span><div class="boxes">${Array.from({length:m},(_,i)=>{const v=st[i]||0,g=v===1?'↑':v===2?'↑↓':v===3?'↑↑':'';return o.edit?`<button class="ob${o.cur===l+i?' cur':''}" data-ob="${l},${i}" aria-label="${l} orbital ${i+1}: ${v===0?'empty':v===1?'one electron, spin up':'two electrons, opposite spins'}">${g}</button>`:`<span class="ob${o.cur===l+i?' cur':''}">${g}</span>`}).join('')}</div><span class="cnt">${st.reduce((a,v)=>a+(v===2||v===3?2:v),0)}/${2*m}</span></div>`}).join('')}</div>`}
+function idealOcc(z,labels){const occ={};let e=z;for(const[l,c]of ORD){const m=NORB[l[1]];occ[l]=new Array(m).fill(0);if(e<=0)continue;const k=Math.min(c,e);e-=k;for(let i=0;i<k;i++){if(i<m)occ[l][i]=1;else occ[l][i-m]=2}}return occ}
+function occCount(occ){return Object.values(occ).reduce((a,arr)=>a+arr.reduce((b,v)=>b+(v>=2?2:v),0),0)}
+function occToSub(occ){return ORD.map(([l])=>[l,(occ[l]||[]).reduce((b,v)=>b+(v>=2?2:v),0)]).filter(x=>x[1]>0)}
+function checkOrb(occ,z){const total=occCount(occ);if(total!==z)return `A neutral ${NAME[z].toLowerCase()} atom has ${z} electrons. Your diagram has ${total}.`;
+  let prevFull=true;for(const[l,c]of ORD){const st=occ[l]||[],k=st.reduce((b,v)=>b+(v>=2?2:v),0),m=NORB[l[1]];if(k>0&&!prevFull)return `Aufbau principle: fill lower-energy subshells first. ${l} has electrons before the subshell below it is full.`;
+    if(k>0){const singles=st.filter(v=>v===1).length,empties=st.filter(v=>v===0).length,pairs=st.filter(v=>v===2).length;if(pairs>0&&empties>0)return `Hund’s rule: in ${l}, put one electron in each orbital before pairing any.`}prevFull=k===c}
+  const want=subcfg(z);for(const[l,k]of want){const have=(occ[l]||[]).reduce((b,v)=>b+(v>=2?2:v),0);if(have!==k)return `Check ${l}: it should hold ${k} electron${k>1?'s':''}.`}return ''}
+
+/* ---------- widgets ---------- */
+const mcOk=(q,v)=>v!=null&&!!q.o[v][1];
+function mc(el,q,key,get,set,onAns){const nm='mc-'+key;
+  el.innerHTML=`<fieldset class="mc"><legend>${q.q}</legend>${sshuf(q.o.length,key).map(i=>`<label class="opt"><input type="radio" name="${nm}" value="${i}" id="${nm}-${i}"><span>${q.o[i][0]}</span></label>`).join('')}<div class="row"><button class="btn sm" data-a="mc">Check answer</button></div><p class="fb" aria-live="polite"></p></fieldset>`;
+  const fb=$('.fb',el),show=i=>{const o=q.o[i];fb.className='fb '+(o[1]?'ok':'no');fb.textContent=(o[1]?'Correct. ':'Not quite. ')+(o[2]||'')};
+  const cur=get();if(cur!=null){const r=$(`input[value="${cur}"]`,el);if(r)r.checked=true;show(cur)}
+  $('[data-a=mc]',el).addEventListener('click',()=>{const r=$('input:checked',el);if(!r){fb.className='fb no';fb.textContent='Choose an answer first.';return}set(+r.value);save();show(+r.value);onAns&&onAns();refresh()})}
+const starter=t=>S.level<=2?`<p class="starter">Sentence starter: ${t}</p>`:'';
+const keyIdea=t=>S.level===1?`<p class="keyidea"><b>Key idea:</b> ${t}</p>`:'';
+const SPEAK={};
+function head(k,title,sub){const i=MODS.findIndex(m=>m[0]===k);return `<div class="shead"><div class="t"><p class="eyebrow">${k==='fin'?'Final assessment':'Module '+(i+1)+(k==='m7'?' · Advanced extension':k==='m5'?' · Advanced':'')}</p><h2>${title}</h2><p class="muted">${sub}</p></div><button class="btn ghost sm" data-reset="${k}">Reset</button></div>`}
+
+/* ===== M1: how many electrons ===== */
+const M1D={q:'What relationship do you notice between atomic number and the number of electrons?',o:[['In a neutral atom, the number of electrons equals the atomic number.',1,'Atomic number = protons, and a neutral atom has as many electrons as protons.'],['The number of electrons is double the atomic number.',0,'Check oxygen: atomic number 8, and 8 electrons.'],['The number of electrons equals the mass number.',0,'Mass number counts protons + neutrons, not electrons.'],['There is no pattern.',0,'Look at every element you tried: the numbers always matched.']]};
+function V_m1(){const st=S.m1,z=st.sel,shown=st.pred[z]!=null&&num(st.pred[z])===z;
+  SPEAK.m1='Module 1. Click any element on the periodic table. Predict how many electrons a neutral atom of that element has, then check your prediction.';
+  return `<section>${head('m1','How many electrons does an atom have?','Click an element, predict its electron count, then reveal the atom.')}
+  <div class="card"><div class="ptwrap">${ptable(z,{seen:Object.fromEntries(Object.keys(st.pred).filter(k=>num(st.pred[k])===+k).map(k=>[k,1]))})}</div><p class="caption">Simplified periodic table, elements 1–36. Green outline: elements you have checked.</p></div>
+  <div class="grid2"><div class="card"><div class="stage" id="m1atom">${shown?atomSVG(z,shells(z),{nShells:shells(z).length}):`<svg class="atom" viewBox="-80 -80 160 160" role="img" aria-label="Electrons hidden until you predict"><circle r="27" fill="rgba(255,90,95,.08)"/>${nucleus(z,Math.max(0,MASS[z]-z))}<text y="62" text-anchor="middle" fill="#9daac0" font-size="10" font-family="JetBrains Mono, monospace">electrons hidden</text></svg>`}</div>
+    <div class="legend"><span><i class="dot p"></i>Proton (+1)</span><span><i class="dot n"></i>Neutron (0)</span><span><i class="dot e"></i>Electron (−1)</span></div>
+    <p class="caption">Simplified shell model. Real electrons occupy orbitals in an electron cloud, not fixed circular paths.</p></div>
+    <div class="card"><div class="readout"><div class="ro"><span>Element</span><b>${NAME[z]}</b></div><div class="ro"><span>Symbol</span><b>${SYM[z]}</b></div><div class="ro"><span>Atomic number</span><b>${z}</b></div><div class="ro"><span>Protons</span><b>${z}</b></div><div class="ro"><span>Electrons (neutral)</span><b>${shown?z:'?'}</b></div></div>
+      ${keyIdea('Atomic number = number of protons = number of electrons in a neutral atom.')}
+      <label class="fld" for="m1p">How many electrons does a neutral ${NAME[z].toLowerCase()} atom contain?<input id="m1p" inputmode="numeric" autocomplete="off" value="${esc(st.pred[z]||'')}" ${shown?'disabled class="ok"':''}></label>
+      <div class="row"><button class="btn" id="m1chk" ${shown?'disabled':''}>Submit prediction</button></div><p class="fb" id="m1fb" aria-live="polite">${shown?'Correct. The atom is revealed with '+z+' electrons.':''}</p></div></div>
+  ${Object.keys(st.pred).filter(k=>num(st.pred[k])===+k).length>=2?`<div class="card"><div id="m1disc"></div></div>`:`<p class="muted small">Check at least two elements to unlock the discovery question.</p>`}
+  ${mcOk(M1D,st.disc)?`<div class="card"><h3>Quick check: 5 random elements</h3><div class="stack" id="m1quiz"></div><div class="row"><button class="btn ghost sm" id="m1new">New set</button></div></div>`:''}</section>`}
+function wire_m1(){const st=S.m1;
+  $('.pt').addEventListener('click',e=>{const b=e.target.closest('[data-z]');if(b){st.sel=+b.dataset.z;save();show('m1')}});
+  const chk=$('#m1chk');if(chk){const go=()=>{const v=$('#m1p').value,fb=$('#m1fb'),z=st.sel,n=num(v);st.pred[z]=v;save();
+    if(n===z){show('m1');refresh();return}fb.className='fb no';fb.textContent=Number.isNaN(n)?'Enter a whole number.':n===MASS[z]?`That is the mass number. Electrons in a neutral atom equal the atomic number.`:`Not quite. Look at the atomic number: ${z}. ${S.level<=2?'In a neutral atom, electrons = protons.':''}`};chk.onclick=go;$('#m1p').onkeydown=e=>{if(e.key==='Enter')go()}}
+  const d=$('#m1disc');if(d)mc(d,M1D,'m1d',()=>st.disc,v=>st.disc=v,()=>show('m1'));
+  const q=$('#m1quiz');if(q){if(!st.quiz){st.quiz=shuffle([...Array(36).keys()].map(i=>i+1)).slice(0,5);st.qa={};st.qok={};save()}
+    q.innerHTML=st.quiz.map((z,i)=>`<div class="row"><span style="min-width:15ch"><b>${NAME[z]}</b> (Z = ${z})</span><input style="max-width:90px" data-q="${i}" inputmode="numeric" aria-label="Electrons in neutral ${NAME[z]}" value="${esc(st.qa[i]||'')}" ${st.qok[i]?'disabled class="ok"':''}><button class="btn sm" data-qc="${i}" ${st.qok[i]?'disabled':''}>Check</button><span class="fb small" data-qf="${i}">${st.qok[i]?'✓':''}</span></div>`).join('');
+    q.addEventListener('click',e=>{const b=e.target.closest('[data-qc]');if(!b)return;const i=+b.dataset.qc,z=st.quiz[i],inp=$(`[data-q="${i}"]`),n=num(inp.value),f=$(`[data-qf="${i}"]`);st.qa[i]=inp.value;
+      if(n===z){st.qok[i]=true;inp.disabled=true;inp.className='ok';b.disabled=true;f.className='fb small ok';f.textContent='✓ Correct'}else{inp.className='no';f.className='fb small no';f.textContent=n===MASS[z]?'That is the mass number.':'Try again: electrons = atomic number.'}save();refresh()});
+    $('#m1new').onclick=()=>{st.quiz=null;save();show('m1')}}}
+
+/* ===== M2: build energy levels ===== */
+const M2CAP=[[1,2],[2,8],[3,18],[4,32]];
+function V_m2(){const st=S.m2,z=st.z,tot=st.sh.reduce((a,b)=>a+b,0),bank=Math.max(0,z-tot),done=Object.keys(st.done).length;
+  SPEAK.m2='Module 2. Drag electrons from the bank onto the energy levels, or select a level and press Add Electron. Check your arrangement when every electron is placed.';
+  return `<section>${head('m2','Build electron energy levels','Drag electrons onto the energy levels. Complete at least five atoms, including lithium, sodium, and calcium.')}
+  <div class="card"><div class="row"><b>Guided:</b><div class="chips" id="m2g">${[3,11,20].map(k=>`<button data-z="${k}" aria-pressed="${z===k}" class="${st.done[k]?'done':''}">${['A','B','C'][[3,11,20].indexOf(k)]} · ${NAME[k]}${st.done[k]?' ✓':''}</button>`).join('')}</div></div>
+    <div class="row"><b>Any atom:</b><div class="chips" id="m2c">${Array.from({length:20},(_,i)=>i+1).filter(k=>![3,11,20].includes(k)).map(k=>`<button data-z="${k}" aria-pressed="${z===k}" class="${st.done[k]?'done':''}">${SYM[k]}${st.done[k]?' ✓':''}</button>`).join('')}</div></div>
+    <p class="small"><b>Atoms completed: ${done}</b> (goal: 5)</p></div>
+  <div class="grid2 l"><div class="card"><div class="stage" id="m2stage"></div>
+      <p class="caption">Selected energy level is outlined in gold. Electrons stay grey. Circular shells are a simplified model; real electrons occupy orbitals.</p>
+      <div><p class="small muted">Electron bank (${bank} left). Drag one onto a level.</p><div class="bank" id="m2bank"></div></div></div>
+    <div class="card"><h3>${NAME[z]} · atomic number ${z}</h3>
+      <div class="row"><span class="small muted">Energy level:</span><span class="seg" id="m2sel" role="group" aria-label="Select energy level">${[0,1,2,3].map(i=>`<button data-sel="${i}" aria-pressed="${st.selShell===i}">n = ${i+1}</button>`).join('')}</span></div>
+      <div class="counts" id="m2counts"></div>
+      <div><span class="small muted">Shell configuration</span><div class="cfg" id="m2cfg"></div></div>
+      <div class="row"><button class="btn" id="m2add">Add electron</button><button class="btn ghost" id="m2rem">Remove electron</button></div>
+      <div class="row"><button class="btn" id="m2chk">Check configuration</button><button class="btn ghost sm" id="m2hint">Show hint</button><button class="btn ghost sm" id="m2reset">Reset atom</button></div>
+      <p class="fb" id="m2fb" aria-live="polite"></p><p class="hint" id="m2h" hidden></p></div></div>
+  <div class="card"><h3>Electron capacity of each energy level</h3>
+    <div class="tablewrap"><table><thead><tr><th>Energy level</th><th>Maximum electrons</th><th>Your answer</th></tr></thead><tbody>${M2CAP.map(([n,c],i)=>`<tr><td>n = ${n}</td><td>${S.level===1||st.capOk?c:'?'}</td><td><input style="max-width:90px;margin:auto" data-cap="${i}" inputmode="numeric" aria-label="Maximum electrons in level ${n}" value="${esc(st.cap[i]||'')}" ${st.capOk?'disabled class="ok"':''}></td></tr>`).join('')}</tbody></table></div>
+    <div class="row"><button class="btn sm" id="m2capc" ${st.capOk?'disabled':''}>Check capacities</button><p class="fb" id="m2capf">${st.capOk?'Correct: 2, 8, 18, 32 (the formula is 2n²).':''}</p></div>
+    <p class="note">These maximums do not mean each level fills completely before the next begins. In potassium and calcium, electrons enter n = 4 while n = 3 holds only 8, because the 4s subshell is lower in energy than 3d.</p></div></section>`}
+function m2draw(pop){const st=S.m2,z=st.z,tot=st.sh.reduce((a,b)=>a+b,0),bank=Math.max(0,z-tot);
+  $('#m2stage').innerHTML=atomSVG(z,st.sh.slice(0,Math.max(...st.sh.map((v,i)=>v?i+1:0),0)),{nShells:4,hi:st.selShell,hit:true,pop,label:`${NAME[z]} model. Electrons placed: ${st.sh.join(', ')} in levels 1 to 4.`});
+  $('#m2bank').innerHTML=bank?Array.from({length:Math.min(bank,20)},()=>`<span class="etok" role="button" aria-label="Electron">−</span>`).join('')+(bank>20?`<span class="small muted">+${bank-20}</span>`:''):'<span class="small muted">All electrons placed.</span>';
+  $('#m2counts').innerHTML=st.sh.map((v,i)=>`<div class="${st.selShell===i?'sel':''}"><b>${v}</b><span>n = ${i+1} (max ${CAP[i]})</span></div>`).join('');
+  const last=st.sh.map((v,i)=>v?i:-1).reduce((a,b)=>Math.max(a,b),-1);$('#m2cfg').textContent=last<0?'—':st.sh.slice(0,last+1).join('-');
+  $$('#m2sel button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.sel===st.selShell)))}
+function m2add(i){const st=S.m2,fb=$('#m2fb'),tot=st.sh.reduce((a,b)=>a+b,0);fb.className='fb';fb.textContent='';
+  if(tot>=st.z){fb.className='fb no';fb.textContent=`A neutral ${NAME[st.z].toLowerCase()} atom has only ${st.z} electron${st.z>1?'s':''}. The bank is empty.`;return}
+  if(st.sh[i]>=CAP[i]){fb.className='fb no';fb.textContent=`Energy level n = ${i+1} can hold a maximum of ${CAP[i]} electrons.${i===2?' (Not 8! n = 3 can hold up to 18.)':''}`;return}
+  st.sh[i]++;st.selShell=i;save();m2draw(i)}
+function wire_m2(){const st=S.m2;m2draw();
+  $('#m2g').parentElement.parentElement.addEventListener('click',e=>{const b=e.target.closest('[data-z]');if(b){st.z=+b.dataset.z;st.sh=[0,0,0,0];st.selShell=0;st.hint=0;save();show('m2')}});
+  $('#m2sel').addEventListener('click',e=>{const b=e.target.closest('[data-sel]');if(b){st.selShell=+b.dataset.sel;save();m2draw()}});
+  $('#m2stage').addEventListener('click',e=>{const h=e.target.closest('[data-shell]');if(h){st.selShell=+h.dataset.shell;save();m2draw()}});
+  $('#m2add').onclick=()=>m2add(st.selShell);
+  $('#m2rem').onclick=()=>{const i=st.selShell;if(st.sh[i]>0){st.sh[i]--;save();m2draw();$('#m2fb').textContent=''}else{$('#m2fb').className='fb no';$('#m2fb').textContent=`Energy level n = ${i+1} has no electrons to remove.`}};
+  $('#m2reset').onclick=()=>{st.sh=[0,0,0,0];st.selShell=0;st.hint=0;save();m2draw();$('#m2fb').textContent='';$('#m2h').hidden=true};
+  $('#m2hint').onclick=()=>{st.hint=Math.min(3,st.hint+1);const z=st.z,want=shells(z);const H=[`How many electrons does a neutral ${NAME[z].toLowerCase()} atom have? Its atomic number is ${z}.`,`The first energy level holds up to 2 electrons. For the first 20 elements, the second holds up to 8, and the third holds 8 before electrons start the fourth.`,`Place 2 in n = 1, then use the remaining ${Math.max(0,z-2)} electron${z-2===1?'':'s'} to fill the next levels in order.`];
+    if(S.level===4){$('#m2h').hidden=false;$('#m2h').textContent='Hints are off at the Proficient level.';return}$('#m2h').hidden=false;$('#m2h').innerHTML=`<b>Hint ${st.hint} of 3:</b> ${esc(H[st.hint-1])}`;save()};
+  $('#m2chk').onclick=()=>{const z=st.z,want=shells(z),have=st.sh.slice(),tot=have.reduce((a,b)=>a+b,0),fb=$('#m2fb');const last=have.map((v,i)=>v?i:-1).reduce((a,b)=>Math.max(a,b),-1),hv=have.slice(0,last+1);
+    if(hv.join('-')===want.join('-')){const first=!st.done[z];st.done[z]=true;save();fb.className='fb ok';fb.textContent=`Correct! ${NAME[z]}: ${want.join('-')}.${first&&Object.keys(st.done).length===5?' You have completed 5 atoms.':''}`;refresh();
+      $$('#m2g button,#m2c button').forEach(b=>{if(+b.dataset.z===z){b.classList.add('done');if(!b.textContent.includes('✓'))b.textContent+=' ✓'}});$('.card p.small b').textContent=`Atoms completed: ${Object.keys(st.done).length}`;return}
+    fb.className='fb no';
+    if(tot!==z){fb.textContent=`Count again: a neutral ${NAME[z].toLowerCase()} atom has ${z} electrons, and you have placed ${tot}.`;return}
+    for(let i=0;i<last;i++){const need=i===0?2:8;if(have[i]<need&&z>(i===0?2:i===1?10:18)-0){fb.textContent=`Fill lower energy levels first: n = ${i+1} should be full (${need} electrons) before electrons go into n = ${i+2}.`;return}}
+    if(z>=19&&have[2]>8){fb.textContent='The third level can hold up to 18, but in potassium and calcium the 19th and 20th electrons go into n = 4. For the first 20 elements, n = 3 holds at most 8.';return}
+    if(z<=18&&have[1]>8){fb.textContent='Energy level n = 2 holds a maximum of 8 electrons.';return}
+    fb.textContent='Not quite. Compare each level with its maximum, and fill from the nucleus outward.'};
+  const tok=$('#m2bank');tok.addEventListener('pointerdown',e=>{const t=e.target.closest('.etok');if(!t)return;e.preventDefault();const g=document.createElement('div');g.className='ghost-e';document.body.appendChild(g);
+    const mv=ev=>{g.style.left=ev.clientX+'px';g.style.top=ev.clientY+'px'};mv(e);
+    const up=ev=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);g.remove();const svg=$('#m2stage svg');if(!svg)return;const r=svg.getBoundingClientRect();
+      if(ev.clientX<r.left||ev.clientX>r.right||ev.clientY<r.top||ev.clientY>r.bottom)return;const vb=svg.viewBox.baseVal,sc=vb.width/r.width,dx=(ev.clientX-r.left)*sc+vb.x,dy=(ev.clientY-r.top)*sc+vb.y,d=Math.hypot(dx,dy);
+      let best=0,bd=1e9;RAD.forEach((R,i)=>{if(Math.abs(R-d)<bd){bd=Math.abs(R-d);best=i}});if(bd>24){$('#m2fb').className='fb no';$('#m2fb').textContent='Drop the electron on one of the energy level rings.';return}m2add(best)};
+    document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up)});
+  $$('[data-cap]').forEach(i=>i.oninput=()=>{st.cap[i.dataset.cap]=i.value;save()});
+  const cc=$('#m2capc');if(cc)cc.onclick=()=>{const want=[2,8,18,32],f=$('#m2capf');let bad=-1;want.forEach((w,i)=>{const inp=$(`[data-cap="${i}"]`),ok=num(inp.value)===w;inp.className=ok?'ok':'no';if(!ok&&bad<0)bad=i});
+    if(bad<0){st.capOk=true;save();show('m2');refresh();return}const v=num($(`[data-cap="${bad}"]`).value);f.className='fb no';f.textContent=v===8&&bad>=2?`Not every energy level holds only 8. Level n = ${bad+1} can hold up to ${want[bad]} (2n² = 2 × ${bad+1}²).`:`Check n = ${bad+1}. Use 2n²: 2 × ${bad+1}² = ?`}}
+
+/* ===== M3: write configurations ===== */
+function V_m3(){const st=S.m3,z=st.z,s=st.st[z]=st.st[z]||{v:{},ok:{},hint:0,tries:0},solved=Object.keys(st.st).filter(k=>st.st[k].solved).length;
+  SPEAK.m3='Module 3. Write the shell electron configuration. Enter the atomic number, the number of electrons, the electrons in each shell, and the final configuration.';
+  return `<section>${head('m3','Write electron configurations','Find the atomic number, the electron count, the electrons in each shell, and the final configuration. Leave unused shells blank.')}
+  <div class="card"><div class="chips" id="m3c">${Array.from({length:20},(_,i)=>i+1).map(k=>`<button data-z="${k}" aria-pressed="${z===k}" class="${st.st[k]&&st.st[k].solved?'done':''}">${SYM[k]}</button>`).join('')}<button data-z="r">Random</button></div><p class="small"><b>Solved: ${solved}</b> (goal: 6)</p></div>
+  <div class="grid2 l"><div class="card"><h3>Element: ${NAME[z]} (${SYM[z]})</h3>${S.level===1?`<p class="keyidea">Atomic number ${z} is shown on the periodic table.</p>`:''}
+    <div class="fields">${[['Z','Atomic number'],['E','Electrons (neutral)'],['s0','First shell'],['s1','Second shell'],['s2','Third shell'],['s3','Fourth shell']].map(([k,l])=>`<label class="fld" for="m3-${k}">${l}<input id="m3-${k}" data-f="${k}" inputmode="numeric" autocomplete="off" value="${esc(s.v[k]||'')}" class="${s.ok[k]?'ok':''}" ${s.ok[k]||s.solved?'disabled':''}></label>`).join('')}</div>
+    <label class="fld" for="m3-C">Electron configuration (example format: 2-8-1)<input id="m3-C" data-f="C" autocomplete="off" value="${esc(s.v.C||'')}" class="${s.ok.C?'ok':''}" ${s.ok.C||s.solved?'disabled':''}></label>
+    <div class="row"><button class="btn" id="m3chk" ${s.solved?'disabled':''}>Check</button><button class="btn ghost sm" id="m3hint" ${s.solved||S.level===4?'disabled':''}>Hint</button><button class="btn ghost sm" id="m3exp" ${s.tries||s.solved?'':'disabled'}>Show explanation</button></div>
+    <p class="fb" id="m3fb" aria-live="polite">${s.solved?`Correct: ${NAME[z]} is ${cfgStr(z)}.`:''}</p><p class="hint" id="m3h" hidden></p><div id="m3x"></div></div>
+   <div class="card"><div class="stage">${s.solved?atomSVG(z,shells(z)):atomSVG(z,[],{nShells:z>18?4:z>10?3:z>2?2:1})}</div><p class="caption">${s.solved?'Your configuration, drawn as a shell model.':'Empty shells. The model fills in when your answer is correct.'}</p></div></div></section>`}
+function wire_m3(){const st=S.m3,z=st.z,s=st.st[z];
+  $('#m3c').addEventListener('click',e=>{const b=e.target.closest('[data-z]');if(!b)return;st.z=b.dataset.z==='r'?1+Math.floor(Math.random()*20):+b.dataset.z;save();show('m3')});
+  $$('[data-f]').forEach(i=>i.oninput=()=>{s.v[i.dataset.f]=i.value;i.classList.remove('no');save()});
+  const want=shells(z);
+  $('#m3chk').onclick=()=>{s.tries++;const fb=$('#m3fb');let msg='';const mark=(k,ok)=>{const i=$('#m3-'+k);i.classList.toggle('ok',ok);i.classList.toggle('no',!ok);if(ok){s.ok[k]=true;i.disabled=true}};
+    const Z=num(s.v.Z),E=num(s.v.E);mark('Z',Z===z);if(Z!==z&&!msg)msg=Z===MASS[z]?'Atomic number is not the mass number. Find the number of protons.':`Check the atomic number of ${NAME[z].toLowerCase()} on the periodic table.`;
+    mark('E',E===z);if(E!==z&&!msg)msg=`A neutral atom has the same number of electrons as protons (${S.level<=2?'the atomic number':'?'}).`;
+    for(let i=0;i<4;i++){const raw=String(s.v['s'+i]||'').trim(),w=want[i]||0,v=raw===''?0:num(raw);const ok=v===w;mark('s'+i,ok);if(!ok&&!msg){if(i===2&&z>=19&&v>8)msg='The third shell can hold up to 18, but for potassium and calcium only 8 go there; the next electrons start the fourth shell.';else if(i>=1&&v>8&&z<=20)msg=`For the first 20 elements, the ${['first','second','third','fourth'][i]} shell holds at most ${i===0?2:8}.`;else if(raw!==''&&Number.isNaN(v))msg='Shell values must be whole numbers.';else msg=`Check the ${['first','second','third','fourth'][i]} shell.`}}
+    const c=normCfg(s.v.C||''),cok=c===want.join('-');mark('C',cok);if(!cok&&!msg){msg=c===String(z)?'An electron configuration is not just the total number of electrons. Show how many electrons are in each shell, like 2-8-1.':c===''?'Write the configuration with dashes between shells, like 2-8-1.':'Check the configuration: list each shell’s electrons from the nucleus outward, separated by dashes.'}
+    const all=['Z','E','s0','s1','s2','s3','C'].every(k=>s.ok[k]);if(all){s.solved=true;save();show('m3');refresh();return}
+    fb.className='fb no';fb.textContent=msg;$('#m3exp').disabled=false;save()};
+  $('#m3hint').onclick=()=>{s.hint=Math.min(3,s.hint+1);const H=['How many electrons does this neutral atom have?','How many electrons occupy the first energy level?','Use the completed lower energy levels to determine the remaining electrons.'];$('#m3h').hidden=false;$('#m3h').innerHTML=`<b>Hint ${s.hint} of 3:</b> ${H[s.hint-1]}`;save()};
+  $('#m3exp').onclick=()=>{$('#m3x').innerHTML=`<div class="note">${NAME[z]} has atomic number ${z}, so a neutral atom has ${z} electrons. ${want.map((v,i)=>`Shell ${i+1}: ${v}`).join(', ')}. Configuration: <b>${want.join('-')}</b>.${z>=19?' The 19th and 20th electrons go into the fourth shell because 4s fills before 3d.':''}</div>`}}
+
+/* ===== M4: valence electrons ===== */
+const M4G={q:'What do the electron configurations of lithium (2-1), sodium (2-8-1), and potassium (2-8-8-1) have in common?',o:[['Each has 1 valence electron in its outermost shell.',1,'Elements in the same group have the same number of valence electrons.'],['Each has the same total number of electrons.',0,'The totals are 3, 11, and 19.'],['Each has 2 occupied shells.',0,'They have 2, 3, and 4 occupied shells.'],['Each has a full outer shell.',0,'A full outer shell is the pattern of Group 18 (noble gases).']]};
+const PER=[3,4,5,6,7,8,9,10];
+function V_m4(){const st=S.m4,z=st.z,sh=shells(z),outer=sh.length-1;
+  SPEAK.m4='Module 4. Valence electrons are the electrons in the outermost shell. Click each electron in the outlined shell to count them.';
+  return `<section>${head('m4','Valence electron investigation','The outermost occupied shell is outlined in gold. Click its electrons to count them. Electrons stay grey.')}
+  <div class="grid2 l"><div class="card"><div class="row"><span class="small muted">Atom:</span><div class="chips" id="m4z">${[17,3,8,11,12,13,15,16,19,20].map(k=>`<button data-z="${k}" aria-pressed="${z===k}">${SYM[k]}</button>`).join('')}</div></div>
+      <div class="stage" id="m4stage"></div><p class="small">Counted: <b id="m4n">${st.picked.length}</b> <button class="btn ghost sm" id="m4clr">Clear count</button></p></div>
+    <div class="card"><h3>${NAME[z]}: ${sh.join('-')}</h3>${keyIdea('Valence electrons = electrons in the outermost shell (the last number).')}
+      ${z===17?`<label class="fld" for="m4q1">How many valence electrons does chlorine have?<input id="m4q1" inputmode="numeric" value="${esc(st.q1==null?'':st.q1)}" ${st.q1ok?'disabled class="ok"':''}></label><div class="row"><button class="btn sm" id="m4q1c" ${st.q1ok?'disabled':''}>Check</button></div><p class="fb" id="m4q1f">${st.q1ok?'Correct: chlorine (2-8-7) has 7 valence electrons.':''}</p>`:`<p>Valence electrons: <b>${st.picked.length===sh[outer]?sh[outer]:'count them in the model'}</b></p><p class="small muted">Pick chlorine to answer the module question.</p>`}
+      <p class="fb" id="m4f" aria-live="polite"></p></div></div>
+  <div class="card"><h3>Across Period 2: lithium to neon</h3><p class="muted small">Record the valence electrons of each element. Use the shell configuration shown.</p>
+    <div class="tablewrap"><table><thead><tr><th>Element</th>${PER.map(k=>`<th>${SYM[k]}</th>`).join('')}</tr></thead><tbody><tr><th>Configuration</th>${PER.map(k=>`<td>${cfgStr(k)}</td>`).join('')}</tr><tr><th>Valence electrons</th>${PER.map(k=>`<td><input data-per="${k}" inputmode="numeric" style="max-width:56px;margin:auto;text-align:center" aria-label="Valence electrons of ${NAME[k]}" value="${esc(st.per[k]||'')}" ${st.perOk?'disabled class="ok"':''}></td>`).join('')}</tr><tr><th>Group</th>${PER.map(k=>`<td>${group(k)}</td>`).join('')}</tr></tbody></table></div>
+    <div class="row"><button class="btn sm" id="m4perc" ${st.perOk?'disabled':''}>Check row</button><p class="fb" id="m4perf">${st.perOk?'Correct. Across a period, valence electrons increase from 1 to 8. Elements in the same period do not have the same valence count.':''}</p></div></div>
+  <div class="card"><h3>Down Group 1</h3><div class="grid2" style="grid-template-columns:repeat(3,minmax(0,1fr))">${[3,11,19].map(k=>`<div class="stack" style="gap:4px;text-align:center"><div class="stage">${atomSVG(k,shells(k),{hi:shells(k).length-1,labels:false})}</div><b>${NAME[k]} ${cfgStr(k)}</b></div>`).join('')}</div><div id="m4g"></div>
+    <div class="note">Main-group pattern: Group 1 has 1 valence electron, Group 2 has 2, and Groups 13–18 have 3–8. Helium is an exception: it is in Group 18 but has only 2 valence electrons. Transition metals (Groups 3–12) need a more advanced treatment.</div></div>
+  <div class="card"><h3>Student challenge: configuration 2-8-6</h3><div class="fields">${[['el','Element name'],['e','Total electrons'],['v','Valence electrons'],['g','Group'],['n','Occupied energy levels']].map(([k,l])=>`<label class="fld" for="m4c-${k}">${l}<input id="m4c-${k}" data-ch="${k}" autocomplete="off" value="${esc(st.ch[k]||'')}" ${st.chOk?'disabled class="ok"':''}></label>`).join('')}</div>
+    <div class="row"><button class="btn sm" id="m4chc" ${st.chOk?'disabled':''}>Check</button><p class="fb" id="m4chf">${st.chOk?'Correct: sulfur, 16 electrons, 6 valence electrons, Group 16, 3 energy levels.':''}</p></div></div></section>`}
+function wire_m4(){const st=S.m4,z=st.z,sh=shells(z),outer=sh.length-1;
+  const draw=()=>{$('#m4stage').innerHTML=atomSVG(z,sh,{hi:outer,click:true,picked:st.picked,label:`${NAME[z]} model with outer shell outlined`});$('#m4n').textContent=st.picked.length};draw();
+  $('#m4z').addEventListener('click',e=>{const b=e.target.closest('[data-z]');if(b){st.z=+b.dataset.z;st.picked=[];save();show('m4')}});
+  $('#m4stage').addEventListener('click',e=>{const g=e.target.closest('[data-e]');if(!g)return;const f=$('#m4f');if(+g.dataset.sh!==outer){f.className='fb no';f.textContent='That electron is in an inner shell. Valence electrons are only in the outermost (outlined) shell.';return}
+    const id=g.dataset.e;if(st.picked.includes(id))st.picked=st.picked.filter(x=>x!==id);else st.picked.push(id);save();draw();f.className='fb ok';f.textContent=st.picked.length===sh[outer]?`You counted all ${sh[outer]} valence electrons.`:''});
+  $('#m4clr').onclick=()=>{st.picked=[];save();draw()};
+  const q=$('#m4q1c');if(q)q.onclick=()=>{const v=num($('#m4q1').value),f=$('#m4q1f');st.q1=$('#m4q1').value;if(v===7){st.q1ok=true;save();show('m4');refresh();return}f.className='fb no';f.textContent=v===17?'17 is the total number of electrons. Valence electrons are only those in the outermost shell.':v===8?'The outer shell can hold 8, but chlorine has 7 there.':'Count the electrons in the outlined outer shell: the last number of 2-8-7.';save()};
+  $$('[data-per]').forEach(i=>i.oninput=()=>{st.per[i.dataset.per]=i.value;save()});
+  const pc=$('#m4perc');if(pc)pc.onclick=()=>{let bad=null;PER.forEach(k=>{const i=$(`[data-per="${k}"]`),ok=num(i.value)===valence(k);i.className=ok?'ok':'no';if(!ok&&bad==null)bad=k});const f=$('#m4perf');
+    if(bad==null){st.perOk=true;save();show('m4');refresh();return}const v=num($(`[data-per="${bad}"]`).value);f.className='fb no';f.textContent=v===bad?`${NAME[bad]}: ${bad} is the total number of electrons. Count only the last shell.`:`Check ${NAME[bad]}: valence electrons are the last number in ${cfgStr(bad)}.`};
+  mc($('#m4g'),M4G,'m4g',()=>st.grp,v=>st.grp=v);
+  $$('[data-ch]').forEach(i=>i.oninput=()=>{st.ch[i.dataset.ch]=i.value;save()});
+  const cc=$('#m4chc');if(cc)cc.onclick=()=>{const f=$('#m4chf'),c=st.ch,okEl=['sulfur','sulphur','s'].includes(String(c.el||'').trim().toLowerCase()),res={el:okEl,e:num(c.e)===16,v:num(c.v)===6,g:num(c.g)===16,n:num(c.n)===3};
+    Object.entries(res).forEach(([k,ok])=>{$('#m4c-'+k).className=ok?'ok':'no'});if(Object.values(res).every(Boolean)){st.chOk=true;save();show('m4');refresh();return}
+    f.className='fb no';f.textContent=!res.e?'Add up the electrons: 2 + 8 + 6.':!res.el?'A neutral atom with 16 electrons has atomic number 16. Which element is that?':!res.v?(num(c.v)===16?'Valence electrons are not the total. Use the outer shell only.':'Valence electrons are in the last shell.'):!res.g?'6 valence electrons in a main-group element means Group 16 (Groups 13–18 have 3–8).':'Count how many numbers are in 2-8-6.'}}
+
+/* ===== M5: subshells & orbitals ===== */
+const M5MC={q:'Which statement correctly compares energy levels and subshells?',o:[['Each principal energy level (n) is divided into subshells (s, p, d, f), and subshells contain orbitals.',1,'For example, n = 2 contains the 2s and 2p subshells.'],['Subshells and energy levels are the same thing.',0,'Energy level n = 3 contains three different subshells: 3s, 3p, and 3d.'],['Every energy level has only an s subshell.',0,'From n = 2 onward, levels also have p subshells.'],['Subshells hold 8 electrons each.',0,'s holds 2, p holds 6, d holds 10, f holds 14.']]};
+const OPRAC=[6,7,8,10,11,12,13,17,20];
+const OLAB=['1s','2s','2p','3s','3p','4s'];
+let anim={t:0};
+function V_m5(){const st=S.m5;
+  SPEAK.m5='Module 5. Electrons fill subshells in order: 1s, 2s, 2p, 3s, 3p, 4s, 3d. Use the Aufbau principle, the Pauli exclusion principle, and Hund’s rule to build orbital diagrams.';
+  const az=st.az,step=Math.min(st.astep,az);
+  return `<section>${head('m5','Subshell configuration builder','Watch electrons fill subshells one at a time, then build your own orbital diagrams.')}
+  <div class="grid2"><div class="card"><h3>Subshells</h3><div class="tablewrap"><table><thead><tr><th>Subshell</th><th>Orbitals</th><th>Maximum electrons</th></tr></thead><tbody><tr><td>s</td><td>1</td><td>2</td></tr><tr><td>p</td><td>3</td><td>6</td></tr><tr><td>d</td><td>5</td><td>10</td></tr><tr><td>f</td><td>7</td><td>14</td></tr></tbody></table></div><div id="m5mc"></div></div>
+    <div class="card"><h3>Three filling rules</h3><div class="rules" style="grid-template-columns:minmax(0,1fr)">
+      <div class="note"><b>Aufbau principle:</b> electrons fill lower-energy orbitals first, in the order 1s → 2s → 2p → 3s → 3p → 4s → 3d → 4p → 5s.</div>
+      <div class="note"><b>Pauli exclusion principle:</b> one orbital holds at most two electrons, with opposite spins (↑↓).</div>
+      <div class="note"><b>Hund’s rule:</b> in equal-energy orbitals, place one electron in each orbital (parallel spins ↑ ↑ ↑) before pairing.</div></div></div></div>
+  <div class="card"><h3>Aufbau animation</h3><div class="row"><label for="m5az">Element</label><select id="m5az">${Array.from({length:36},(_,i)=>i+1).map(k=>`<option value="${k}" ${k===az?'selected':''}>${k} ${NAME[k]}</option>`).join('')}</select>
+      <button class="btn" id="m5next" ${step>=az?'disabled':''}>Next electron</button><button class="btn ghost sm" id="m5all">Fill all</button><button class="btn ghost sm" id="m5ar">Reset</button><span class="small muted">Electron ${step} of ${az}</span></div>
+    <div class="seq" id="m5seq"></div>
+    <div class="grid2"><div id="m5orb"></div><div class="stack"><span class="small muted">Configuration so far</span><div class="cfg sub" id="m5cfg"></div><p class="small" id="m5note"></p></div></div></div>
+  <div class="card"><h3>Orbital builder</h3><p class="muted small">Click a box to add electrons: empty → ↑ → ↑↓ → empty. Build the ground-state diagram for the element.</p>
+    <div class="chips" id="m5oz">${OPRAC.map(k=>`<button data-z="${k}" aria-pressed="${st.oz===k}" class="${st.odone[k]?'done':''}">${NAME[k]}${st.odone[k]?' ✓':''}</button>`).join('')}</div>
+    <div class="grid2"><div id="m5ob"></div><div class="stack"><span class="small muted">Your configuration</span><div class="cfg sub" id="m5obcfg"></div><div class="row"><button class="btn" id="m5obc">Check diagram</button><button class="btn ghost sm" id="m5obr">Clear</button></div><p class="fb" id="m5obf" aria-live="polite"></p></div></div>
+    <details><summary class="small"><b>Advanced: chromium and copper exceptions</b></summary><p class="small" style="margin-top:6px">Simple Aufbau predicts chromium as …4s² 3d⁴ and copper as …4s² 3d⁹. The real ground states are chromium <b>${fmtSub(subcfg(24).slice(5))}</b> and copper <b>${fmtSub(subcfg(29).slice(5))}</b>: a half-filled or filled 3d subshell is especially stable.</p></details></div>
+  <div class="card"><h3>Student challenge: sulfur</h3>
+    <label class="fld" for="m5s">Write the subshell configuration of sulfur (you can type 1s2 2s2 …)<input id="m5s" autocomplete="off" value="${esc(st.sTxt)}" ${st.sOk?'disabled class="ok"':''}></label>
+    <div class="row"><button class="btn sm" id="m5sc" ${st.sOk?'disabled':''}>Check configuration</button><p class="fb" id="m5sf">${st.sOk?'Correct: 1s² 2s² 2p⁶ 3s² 3p⁴.':''}</p></div>
+    <p class="small muted">Now build sulfur’s orbital diagram.</p><div id="m5sob"></div><div class="row"><button class="btn sm" id="m5sobc" ${st.sDiagOk?'disabled':''}>Check diagram</button><p class="fb" id="m5sobf">${st.sDiagOk?'Correct. 3p⁴: two orbitals paired and one single after Hund’s rule.':''}</p></div></div></section>`}
+function m5anim(){const st=S.m5,az=st.az,step=Math.min(st.astep,az);const occ=idealOcc(step);let cur=null,full=[];let e=step;for(const[l,c]of ORD){if(e>=c){full.push(l);e-=c}else{if(e>0||step<az)cur=l;break}}
+  const curL=(()=>{let e2=step;for(const[l,c]of ORD){if(e2<c)return l;e2-=c}return null})();
+  const usedOrd=ORD.filter((x,i)=>{let tot=0;for(let j=0;j<=i;j++)tot+=ORD[j][1];return tot-ORD[i][1]<az}).map(x=>x[0]);
+  $('#m5seq').innerHTML=ORD.map(([l],i)=>`<span class="${full.includes(l)&&usedOrd.includes(l)?'full':l===curL&&step<az?'cur':''}">${l}</span>${i<ORD.length-1?'<i>→</i>':''}`).join('');
+  let lastBox=null;if(step>0){let e3=step;for(const[l,c]of ORD){if(e3<=c){const m=NORB[l[1]],k=e3;lastBox=l+(k<=m?k-1:k-m-1);break}e3-=c}}
+  $('#m5orb').innerHTML=orbView(occ,{labels:usedOrd.length?usedOrd:['1s'],cur:lastBox});
+  $('#m5cfg').textContent=step?fmtSub(occToSub(occ)):'—';
+  $('#m5note').textContent=step>=az?(az===24||az===29?`Simple Aufbau gives the pattern above, but real ${NAME[az].toLowerCase()} is ${fmtSub(subcfg(az))}.`:`${NAME[az]} complete: ${az} electrons.`):step?(lastBox&&lastBox[1]!=='s'&&+lastBox.slice(2)<NORB[lastBox[1]]&&occ[lastBox.slice(0,2)][+lastBox.slice(2)]===1?'Hund’s rule: this electron goes into an empty orbital before any pairing.':''):''}
+function wire_m5(){const st=S.m5;mc($('#m5mc'),M5MC,'m5mc',()=>st.mc,v=>st.mc=v);m5anim();
+  $('#m5az').onchange=e=>{st.az=+e.target.value;st.astep=0;save();show('m5')};
+  $('#m5next').onclick=()=>{if(st.astep<st.az){st.astep++;save();m5anim();$('#m5next').disabled=st.astep>=st.az;$('#m5next').nextElementSibling.nextElementSibling.nextElementSibling.textContent=`Electron ${st.astep} of ${st.az}`}};
+  $('#m5all').onclick=()=>{clearInterval(anim.t);if(!motionOK()){st.astep=st.az;save();show('m5');return}anim.t=setInterval(()=>{if(!$('#m5next')||st.astep>=st.az){clearInterval(anim.t);save();if($('#m5next'))show('m5');return}$('#m5next').click()},220)};
+  $('#m5ar').onclick=()=>{clearInterval(anim.t);st.astep=0;save();show('m5')};
+  const builder=(boxId,cfgId,store,z)=>{const labs=OLAB;const draw=()=>{$(boxId).innerHTML=orbView(store,{labels:labs,edit:true});if(cfgId){const sub=occToSub(store);$(cfgId).textContent=sub.length?fmtSub(sub):'—'}};draw();
+    $(boxId).addEventListener('click',e=>{const b=e.target.closest('[data-ob]');if(!b)return;const[l,i]=b.dataset.ob.split(',');store[l]=store[l]||new Array(NORB[l[1]]).fill(0);store[l][+i]=(store[l][+i]+1)%3;save();draw()});return draw};
+  S.m5.ob[st.oz]=S.m5.ob[st.oz]||{};const dob=builder('#m5ob','#m5obcfg',S.m5.ob[st.oz],st.oz);
+  $('#m5oz').addEventListener('click',e=>{const b=e.target.closest('[data-z]');if(b){st.oz=+b.dataset.z;save();show('m5')}});
+  $('#m5obr').onclick=()=>{S.m5.ob[st.oz]={};save();show('m5')};
+  $('#m5obc').onclick=()=>{const m=checkOrb(S.m5.ob[st.oz],st.oz),f=$('#m5obf');if(!m){st.odone[st.oz]=true;save();f.className='fb ok';f.textContent=`Correct! ${NAME[st.oz]}: ${fmtSub(subcfg(st.oz))}.`;refresh();const b=$(`#m5oz [data-z="${st.oz}"]`);b.classList.add('done');if(!b.textContent.includes('✓'))b.textContent+=' ✓'}else{f.className='fb no';f.textContent=m}};
+  builder('#m5sob',null,S.m5.sob,16);
+  $('#m5s').oninput=e=>{st.sTxt=e.target.value;save()};
+  const sc=$('#m5sc');if(sc)sc.onclick=()=>{const f=$('#m5sf');if(subMatch(st.sTxt,16)){st.sOk=true;save();show('m5');refresh();return}const{tok}=parseSub(st.sTxt);const sum=tok.reduce((a,t)=>a+ +t.slice(2),0);f.className='fb no';f.textContent=!tok.length?'Use the form 1s2 2s2 2p6 …':sum!==16?`Your configuration has ${sum} electrons. Sulfur has 16.`:tok.some(t=>t[1]==='s'&&+t.slice(2)>2)?'An s subshell holds at most 2 electrons.':tok.some(t=>t[1]==='p'&&+t.slice(2)>6)?'A p subshell holds at most 6 electrons.':'Follow the Aufbau order: 1s, 2s, 2p, 3s, 3p.'};
+  const sbc=$('#m5sobc');if(sbc)sbc.onclick=()=>{const m=checkOrb(S.m5.sob,16),f=$('#m5sobf');if(!m){st.sDiagOk=true;save();f.className='fb ok';f.textContent='Correct. 3p⁴: two orbitals paired and one single after Hund’s rule.';sbc.disabled=true;refresh()}else{f.className='fb no';f.textContent=m}}}
+
+/* ===== M6: detective ===== */
+const FIX=[{z:6,f:'shell'},{z:11,f:'shell'},{z:17,f:'shell'},{z:20,f:'shell'},{z:13,f:'sub'}];
+function makeList(){const used=new Set(FIX.map(c=>c.z));const pool=shuffle(Array.from({length:20},(_,i)=>i+1).filter(z=>!used.has(z)));return FIX.concat(pool.slice(0,10).map(z=>({z,f:null})))}
+function fmtFor(c,i){if(c.f)return c.f;const st=S.m6;return st.streak>=6?'sub':st.streak>=3?'diagram':'shell'}
+function V_m6(){const st=S.m6;if(!st.list){st.list=makeList();st.i=0;st.st={};st.res={};st.streak=0;save()}const L=st.list,i=Math.min(st.i,L.length);
+  SPEAK.m6='Module 6. Electron Configuration Detective. Use the configuration to find the total electrons, atomic number, element, symbol, valence electrons, and group.';
+  const first=Object.values(st.res).filter(v=>v===1).length;
+  if(i>=L.length)return `<section>${head('m6','Electron Configuration Detective!','Round complete.')}<div class="card"><p class="scoreline">${first} / ${L.length} on the first try</p><div class="dots">${L.map((c,k)=>`<span class="${st.res[k]===1?'ok':'no'}">${k+1}</span>`).join('')}</div><div class="row"><button class="btn" id="m6again">Play a new round</button></div></div></section>`;
+  const c=L[i],f=st.st[i]&&st.st[i].fmt||fmtFor(c,i);st.st[i]=st.st[i]||{fmt:f,v:{},ok:{},hint:0,tries:0};const s=st.st[i];
+  const clue=s.fmt==='sub'?`<div class="cfg sub">${fmtSub(subcfg(c.z))}</div>`:s.fmt==='diagram'?atomSVG(c.z,shells(c.z),{labels:false,label:'Mystery atom shell diagram'}):`<div class="cfg">${cfgStr(c.z)}</div>`;
+  return `<section>${head('m6','Electron Configuration Detective!','Identify the mystery neutral atom. Hints get more specific each time. Difficulty rises as you build a streak.')}
+  <div class="dots">${L.map((x,k)=>`<span class="${st.res[k]===1?'ok':st.res[k]===0?'no':k===i?'cur':''}">${k+1}</span>`).join('')}</div>
+  <div class="card"><p class="eyebrow">Case ${i+1} of ${L.length} · ${s.fmt==='sub'?'subshell configuration':s.fmt==='diagram'?'shell diagram':'shell configuration'} · streak ${st.streak}</p>
+    <div class="clue"><div class="vis">${s.fmt==='diagram'?clue:`<div style="padding:10px;text-align:center">${clue}</div>`}</div>
+      <div class="fields">${[['e','Total electrons'],['Z','Atomic number'],['name','Element name'],['sym','Symbol'],['v','Valence electrons'],['g','Group']].map(([k,l])=>`<label class="fld" for="m6-${k}">${l}<input id="m6-${k}" data-f="${k}" autocomplete="off" ${k==='sym'?'maxlength="2"':''} value="${esc(s.v[k]||'')}" class="${s.ok[k]?'ok':''}" ${s.ok[k]||s.solved?'disabled':''}></label>`).join('')}</div></div>
+    <div class="row"><button class="btn" id="m6chk" ${s.solved?'disabled':''}>Check</button><button class="btn ghost sm" id="m6hint" ${s.solved||S.level===4?'disabled':''}>Hint</button>${s.solved?`<button class="btn" id="m6next">${i+1<L.length?'Next case →':'See results'}</button>`:''}</div>
+    <p class="fb" id="m6fb" aria-live="polite">${s.solved?`Case solved: ${NAME[c.z]} (${SYM[c.z]}).`:''}</p><p class="hint" id="m6h" hidden></p></div></section>`}
+function wire_m6(){const st=S.m6;const a=$('#m6again');if(a){a.onclick=()=>{st.list=null;save();show('m6')};return}
+  const i=st.i,c=st.list[i],s=st.st[i],z=c.z;$$('[data-f]').forEach(x=>x.oninput=()=>{s.v[x.dataset.f]=x.value;x.classList.remove('no');save()});
+  $('#m6chk').onclick=()=>{s.tries++;const v=s.v,res={e:num(v.e)===z,Z:num(v.Z)===z,name:String(v.name||'').trim().toLowerCase()===NAME[z].toLowerCase()||(z===13&&String(v.name||'').trim().toLowerCase()==='aluminium'),sym:String(v.sym||'').trim()===SYM[z],v:num(v.v)===valence(z),g:num(v.g)===group(z)};
+    Object.entries(res).forEach(([k,ok])=>{const inp=$('#m6-'+k);inp.classList.toggle('ok',ok);inp.classList.toggle('no',!ok);if(ok){s.ok[k]=true;inp.disabled=true}});
+    const fb=$('#m6fb');if(Object.values(res).every(Boolean)){s.solved=true;const firstTry=s.tries===1&&!s.hint;st.res[i]=firstTry?1:0;st.streak=firstTry?st.streak+1:0;save();show('m6');refresh();return}
+    fb.className='fb no';fb.textContent=!res.e?'Add every number in the configuration to get the total electrons.':!res.Z?'In a neutral atom, atomic number = total electrons.':!res.sym&&String(v.sym||'').trim().toLowerCase()===SYM[z].toLowerCase()?'Check the capitalization of the symbol.':(!res.name||!res.sym)?'Find the box with this atomic number on the periodic table.':!res.v?(num(v.v)===z?'Valence electrons are not the total; use the outermost shell.':'Valence electrons are in the outermost shell (the last number).'):'Main-group pattern: 1 → Group 1, 2 → Group 2, 3–8 → Groups 13–18 (helium is in Group 18).';save()};
+  $('#m6hint').onclick=()=>{s.hint=Math.min(3,s.hint+1);const H=['Add up all the electrons in the configuration.',`In a neutral atom, atomic number = total electrons. Find box number ${S.level<=2?z:'?'} on the periodic table.`,`The last shell holds the valence electrons (${valence(z)} here). Groups: 1 → 1, 2 → 2, 3–8 → 13–18.`];$('#m6h').hidden=false;$('#m6h').innerHTML=`<b>Hint ${s.hint} of 3:</b> ${esc(H[s.hint-1])}`;save()};
+  const n=$('#m6next');if(n){n.onclick=()=>{st.i++;save();show('m6')};n.focus()}}
+
+/* ===== M7: ions ===== */
+const IONS=[{z:11,d:-1,name:'Na⁺'},{z:17,d:1,name:'Cl⁻'},{z:12,d:-2,name:'Mg²⁺'},{z:8,d:2,name:'O²⁻'},{z:13,d:-3,name:'Al³⁺'}];
+const M7Q={q:'How is the electron configuration of an ion different from that of its neutral atom?',o:[['It has more or fewer electrons, so the shell numbers change, but the protons stay the same.',1,'Na: 2-8-1 → Na⁺: 2-8. The nucleus still has 11 protons.'],['It has a different number of protons.',0,'Gaining or losing electrons never changes the protons.'],['It is exactly the same.',0,'The electron count changes, so the configuration changes.'],['Ions always have 8 shells.',0,'Na⁺ has 2 shells: 2-8.']]};
+function V_m7(){const st=S.m7;SPEAK.m7='Module 7. Atoms can lose or gain electrons to form ions. Remove an electron from sodium and add one to chlorine, and watch the configuration change.';
+  return `<section>${head('m7','Electron configuration and ions','Remove or add electrons to make each ion. Watch the configuration and charge change while the protons stay the same.')}
+  <div class="ions" id="ions">${IONS.map((I,k)=>{const e=st.e[k]!=null?st.e[k]:I.z,ch=I.z-e,done=st.done[k];return `<div class="card ion" data-ion="${k}"><h3>${NAME[I.z]} → ${I.name}</h3><div class="stage">${atomSVG(I.z,shells(e),{labels:false,hi:shells(e).length-1,label:`${NAME[I.z]} with ${e} electrons`})}</div>
+    <div class="cfg">${shells(e).join('-')}</div><p class="small">${I.z} protons · ${e} electrons · charge <b>${ch===0?'0':(ch>0?'+':'−')+(Math.abs(ch)>1?Math.abs(ch):'')+(Math.abs(ch)>1?'':'1')}</b></p>
+    <div class="row" style="justify-content:center"><button class="btn ghost sm" data-ie="${k},-1">Remove electron</button><button class="btn ghost sm" data-ie="${k},1">Add electron</button><button class="btn ghost sm" data-ie="${k},0">Reset</button></div>
+    <p class="fb ${done?'ok':''} small">${done?`${I.name}: ${shells(I.z+I.d).join('-')}. Neutral ${NAME[I.z].toLowerCase()} was ${cfgStr(I.z)}.`:`Goal: make ${I.name} (${I.d<0?'lose':'gain'} ${Math.abs(I.d)}).`}</p></div>`}).join('')}</div>
+  <div class="note mis">Electrons equal protons only in neutral atoms. In an ion, the electron count changes but the proton count does not. These are common simple-ion examples, not a rule that every atom always gains or loses electrons to reach 8.</div>
+  <div class="card"><div id="m7q"></div>${starter('“An ion’s configuration is different because…”')}</div></section>`}
+function wire_m7(){const st=S.m7;
+  $('#ions').addEventListener('click',e=>{const b=e.target.closest('[data-ie]');if(!b)return;const[k,d]=b.dataset.ie.split(',').map(Number),I=IONS[k];let ecount=st.e[k]!=null?st.e[k]:I.z;
+    if(d===0)ecount=I.z;else ecount=Math.max(I.z-3,Math.min(I.z+3,ecount+d));st.e[k]=ecount;if(ecount===I.z+I.d)st.done[k]=true;save();
+    const card=b.closest('[data-ion]');const tmp=document.createElement('div');tmp.innerHTML=V_m7();card.replaceWith($(`[data-ion="${k}"]`,tmp));refresh()});
+  mc($('#m7q'),M7Q,'m7q',()=>st.mc,v=>st.mc=v)}
+
+/* ===== FINAL ===== */
+const SKILL={EC:'Electron counts',SC:'Shell configurations',VAL:'Valence electrons',PAT:'Periodic patterns',ID:'Identify elements',SUB:'Subshells and orbital diagrams'};
+function genFinal(seed){const r=rng(seed*7919+13),pick=a=>a[Math.floor(r()*a.length)],take=(pool,n)=>shuffle(pool,r).slice(0,n);const Q=[];
+  const e4=take(Array.from({length:20},(_,i)=>i+1),4);
+  Q.push({t:'num',s:'EC',q:`How many electrons are in a neutral atom of ${NAME[e4[0]].toLowerCase()}?`,ans:e4[0],exp:`Neutral atom: electrons = atomic number = ${e4[0]}.`});
+  Q.push({t:'num',s:'EC',q:`An atom has atomic number ${e4[1]}. How many electrons does the neutral atom have?`,ans:e4[1],exp:`Electrons = atomic number = ${e4[1]}.`});
+  Q.push({t:'num',s:'EC',img:e4[2],q:'How many electrons are shown in this neutral atom?',ans:e4[2],exp:`Add the electrons in every shell: ${cfgStr(e4[2])} = ${e4[2]}.`});
+  Q.push({t:'num',s:'EC',q:`A neutral atom has ${e4[3]} protons. How many electrons does it have?`,ans:e4[3],exp:`A neutral atom has equal numbers of protons and electrons.`});
+  const sc=take([3,4,5,6,7,9,10,12,14,15,16,18],3).concat([pick([19,20])]);const scImg=pick([8,11,13,17].filter(z=>!sc.includes(z)));
+  sc.forEach(z=>Q.push({t:'cfg',s:'SC',z,q:`Write the electron configuration of ${NAME[z].toLowerCase()} (atomic number ${z}).`,exp:`${NAME[z]}: ${cfgStr(z)}.${z>=19?' The 19th and 20th electrons go into the fourth shell, not the third.':''}`}));
+  Q.push({t:'cfg',s:'SC',z:scImg,img:scImg,q:'Write the electron configuration of the atom shown.',exp:`Count each shell from the nucleus outward: ${cfgStr(scImg)}.`});
+  const vz=take([1,3,5,7,8,9,12,13,15,16,17,19,20].filter(z=>![...sc,scImg].includes(z)),4);
+  vz.slice(0,3).forEach(z=>Q.push({t:'num',s:'VAL',q:`How many valence electrons does ${NAME[z].toLowerCase()} have?`,ans:valence(z),z,exp:`${NAME[z]}: ${cfgStr(z)}. The outermost shell holds ${valence(z)}.`}));
+  Q.push({t:'num',s:'VAL',img:vz[3],q:'How many valence electrons does the atom shown have?',ans:valence(vz[3]),z:vz[3],exp:`Count only the outermost shell: ${valence(vz[3])}.`});
+  const pairs=[[3,11],[4,12],[5,13],[6,14],[7,15],[8,16],[9,17]],pr=pick(pairs),g=pr[0];
+  Q.push({t:'mc',s:'PAT',q:'Which two elements have the same number of valence electrons?',o:[[`${NAME[pr[0]]} and ${NAME[pr[1]]}`,1],[`${NAME[pr[0]]} and ${NAME[pr[0]+1]}`,0],[`${NAME[pr[1]]} and ${NAME[pr[1]+1]}`,0],[`${NAME[pr[0]]} and ${NAME[pr[1]+1]}`,0]],exp:`${NAME[pr[0]]} (${cfgStr(pr[0])}) and ${NAME[pr[1]]} (${cfgStr(pr[1])}) are in the same group, so they have the same number of valence electrons.`});
+  Q.push({t:'mc',s:'PAT',q:'Atoms of all elements in Period 3 have the same number of',o:[['occupied principal energy levels',1],['valence electrons',0],['total electrons',0],['protons',0]],exp:'Every Period 3 element has 3 occupied energy levels. Valence electrons increase from 1 to 8 across the period.'});
+  const gz=pick([11,12,13,14,15,16,17,18]),gopts=shuffle([group(gz),...[1,2,13,14,15,16,17,18].filter(x=>x!==group(gz)).slice(0,3)],r);
+  Q.push({t:'mc',s:'PAT',q:`An element has the electron configuration ${cfgStr(gz)}. In which group is it located?`,o:gopts.map(x=>[`Group ${x}`,x===group(gz)?1:0]),exp:`${valence(gz)} valence electrons in Period 3 places it in Group ${group(gz)}.`});
+  const idz=take([5,7,9,10,14,15,16,18,19].filter(z=>z!==gz),2);
+  Q.push({t:'id',s:'ID',z:idz[0],q:`Which element has the electron configuration ${cfgStr(idz[0])}? (name or symbol)`,exp:`${cfgStr(idz[0])} adds to ${idz[0]} electrons, so Z = ${idz[0]}: ${NAME[idz[0]]}.`});
+  Q.push({t:'id',s:'ID',z:idz[1],img:idz[1],q:'Identify the neutral atom shown. (name or symbol)',exp:`The shells add to ${idz[1]} electrons: ${NAME[idz[1]]}.`});
+  const sz=pick([11,12,13,14,15,17,19,20]);
+  Q.push({t:'sub',s:'SUB',z:sz,q:`Write the subshell configuration of ${NAME[sz].toLowerCase()}. (You may type 1s2 2s2 …)`,exp:`${NAME[sz]}: ${fmtSub(subcfg(sz))}.`});
+  const oz=pick([6,7,8]),good=idealOcc(oz),diag=occ=>`<div class="miniorb">${['1s','2s','2p'].map(l=>`<div class="r"><b>${l}</b>${(occ[l]||[]).map(v=>`<span class="ob">${v===1?'↑':v===2?'↑↓':v===3?'↑↑':''}</span>`).join('')}</div>`).join('')}</div>`;
+  const hund=JSON.parse(JSON.stringify(good));{const p=hund['2p'],k=p.reduce((a,v)=>a+v,0);hund['2p']=[2,k-2>=1?1:0,0].map((v,i)=>i===0?2:i===1?Math.max(0,k-2):0)}
+  const pauli=JSON.parse(JSON.stringify(good));pauli['1s']=[3];
+  const auf=JSON.parse(JSON.stringify(good));auf['2s']=[1];auf['2p']=good['2p'].slice();{const i=auf['2p'].indexOf(0);if(i>=0)auf['2p'][i]=1;else auf['2p'][2]=2}
+  Q.push({t:'mc',s:'SUB',html:true,q:`Which orbital diagram correctly represents a ground-state ${NAME[oz].toLowerCase()} atom (${fmtSub(subcfg(oz))})?`,o:[[diag(good),1],[diag(hund),0],[diag(pauli),0],[diag(auf),0]],exp:'Correct diagram: 1s and 2s paired, then 2p filled one per orbital before pairing (Hund’s rule). Wrong ones break Hund’s rule, the Pauli principle (↑↑ in one orbital), or the Aufbau principle (2p before 2s is full).'});
+  return Q}
+let FQ=genFinal(S.fin.seed);
+function gradeQ(q,a){if(a==null||a==='')return false;if(q.t==='mc')return !!q.o[a][1];if(q.t==='num')return num(a)===q.ans;if(q.t==='cfg')return normCfg(a)===cfgStr(q.z);if(q.t==='id'){const t=String(a).trim();return t.toLowerCase()===NAME[q.z].toLowerCase()||t===SYM[q.z]||(q.z===13&&t.toLowerCase()==='aluminium')}if(q.t==='sub')return subMatch(a,q.z);return false}
+function ansText(q){return q.t==='mc'?(q.html?'see the highlighted diagram':q.o.find(o=>o[1])[0]):q.t==='num'?q.ans:q.t==='cfg'?cfgStr(q.z):q.t==='id'?`${NAME[q.z]} (${SYM[q.z]})`:fmtSub(subcfg(q.z))}
+function misNote(q,a){const n=num(a);if(q.s==='VAL'&&q.z&&n===q.z)return ' Valence electrons are not the same as total electrons.';if(q.t==='cfg'&&normCfg(a)===String(q.z))return ' A configuration shows electrons in each shell, not just the total.';if(q.t==='cfg'&&q.z>=19&&normCfg(a).startsWith('2-8-9'))return ' The third shell does not need to fill completely before the fourth begins.';return ''}
+function V_fin(){const f=S.fin,res=f.res;FQ=genFinal(f.seed);SPEAK.fin='Final assessment. Twenty Regents-style questions. Answers are checked when you submit.';
+  return `<section>${head('fin','Regents-style assessment','20 questions. Answers are checked only when you submit. All atoms are neutral.')}
+  <div class="row"><span class="badge">Set ${f.seed===1?'A':'#'+f.seed}</span><button class="btn ghost sm" id="finNew">Generate new practice set</button></div>
+  <div class="card" id="finRep" ${res?'':'hidden'}>${res?finReport():''}</div>
+  <div class="stack" id="finList">${FQ.map((q,i)=>{const a=f.ans[i],lock=res&&(!f.retry||res[i]),stc=res&&(!f.retry||res[i])?(res[i]?'ok':'no'):'';
+    const input=q.t==='mc'?`<div>${sshuf(q.o.length,'f'+f.seed+'-'+i).map(j=>`<label class="opt"><input type="radio" name="fq${i}" data-fq="${i}" value="${j}" ${a===j?'checked':''} ${lock?'disabled':''}><span>${q.o[j][0]}</span></label>`).join('')}</div>`:`<label class="fld" style="max-width:${q.t==='sub'?'420px':'260px'}">${q.t==='cfg'?'Configuration (like 2-8-1)':q.t==='sub'?'Subshell configuration':q.t==='id'?'Element':'Answer'}<input data-fq="${i}" autocomplete="off" value="${esc(a||'')}" ${lock?'disabled':''}></label>`;
+    return `<div class="fq ${stc}" id="fq${i}"><div class="qh"><span><span class="qn">${i+1}.</span> <b>${q.q}</b></span><span class="badge ${stc}">${stc==='ok'?'Correct':stc==='no'?'Incorrect':SKILL[q.s]}</span></div>${q.img?`<div class="qimg">${atomSVG(q.img,shells(q.img),{labels:false,label:'Shell diagram for question '+(i+1)})}</div>`:''}${input}
+      ${stc==='no'&&!f.retry?`<div class="exp"><b>Answer:</b> ${q.html?'':esc(String(ansText(q)))} ${esc(q.exp)}${esc(misNote(q,a))}</div>`:''}</div>`}).join('')}</div>
+  <div class="row"><button class="btn" id="finSub" ${res&&!f.retry?'disabled':''}>${f.retry?'Submit retry':'Submit assessment'}</button><p class="fb" id="finFb" aria-live="polite"></p></div></section>`}
+function finReport(){const f=S.fin,res=f.res,c=res.filter(Boolean).length,pct=Math.round(c/res.length*100);
+  const sk=Object.keys(SKILL).map(k=>{const idx=FQ.map((q,i)=>q.s===k?i:-1).filter(i=>i>=0),ok=idx.filter(i=>res[i]).length;return[k,ok,idx.length]});
+  return `<div class="row" style="justify-content:space-between"><div><p class="eyebrow">Results</p><p class="scoreline">${c} / ${res.length} · ${pct}%</p></div><div class="row">${res.some(r=>!r)&&!f.retry?'<button class="btn" id="finRetry">Retry incorrect questions</button>':''}</div></div>
+   <div class="tablewrap"><table><thead><tr><th>Skill</th><th>Correct</th><th>Mastery</th></tr></thead><tbody>${sk.map(([k,o,n])=>`<tr><td style="text-align:left">${SKILL[k]}</td><td>${o} / ${n}</td><td><span class="badge ${o===n?'ok':'no'}">${o===n?'Mastered':'Practice more'}</span></td></tr>`).join('')}</tbody></table></div>
+   <div class="qchips">${res.map((r,i)=>`<button class="${r?'ok':'no'}" data-goto="${i}" aria-label="Question ${i+1}">${i+1}</button>`).join('')}</div>
+   <label class="fld" style="max-width:320px" for="finName">Your name (optional)<input id="finName" value="${esc(f.name||'')}" autocomplete="off"></label>
+   <div class="row"><button class="btn ghost" id="finCopy">Copy summary</button>${window.self===window.top?'<button class="btn ghost" id="finPrint">Print summary</button>':''}<span class="small" id="finMsg" aria-live="polite"></span></div><textarea id="finText" readonly aria-label="Assessment summary"></textarea>`}
+function summary(){const f=S.fin,res=f.res||[],c=res.filter(Boolean).length;const sk=Object.keys(SKILL).map(k=>{const idx=FQ.map((q,i)=>q.s===k?i:-1).filter(i=>i>=0);return `• ${SKILL[k]}: ${idx.filter(i=>res[i]).length}/${idx.length}`}).join('\n');
+  return `Electron Configuration Lab: assessment summary\nName: ${f.name||'(not entered)'}\nSet: ${f.seed===1?'A':'#'+f.seed}\n\nModules\n${MODS.slice(0,7).map(([k,t])=>`${t}: ${DONE[k]()?'complete':'not yet'}`).join('\n')}\n\nScore: ${c}/${res.length} (${res.length?Math.round(c/res.length*100):0}%)\n${sk}\nMissed: ${res.map((r,i)=>r?null:i+1).filter(Boolean).join(', ')||'none'}`}
+function wire_fin(){const f=S.fin;
+  $('#finList').addEventListener('input',e=>{const t=e.target;if(t.dataset.fq==null)return;const i=+t.dataset.fq;f.ans[i]=t.type==='radio'?+t.value:t.value;save()});
+  $('#finList').addEventListener('change',e=>{const t=e.target;if(t.dataset.fq!=null&&t.type==='radio'){f.ans[+t.dataset.fq]=+t.value;save()}});
+  $('#finSub').onclick=()=>{const fb=$('#finFb'),blank=FQ.findIndex((q,i)=>!(f.res&&f.retry&&f.res[i])&&(f.ans[i]==null||f.ans[i]===''));
+    if(blank>=0&&!fb.dataset.w){fb.className='fb no';fb.textContent=`Question ${blank+1} is blank. Press Submit again to turn it in anyway.`;fb.dataset.w='1';$('#fq'+blank).scrollIntoView({block:'center',behavior:motionOK()?'smooth':'auto'});return}
+    delete fb.dataset.w;f.res=FQ.map((q,i)=>(f.res&&f.retry&&f.res[i])?true:gradeQ(q,f.ans[i]));f.retry=false;save();show('fin');refresh();$('#finRep').scrollIntoView({block:'start',behavior:motionOK()?'smooth':'auto'})};
+  let arm=0;$('#finNew').onclick=e=>{if(!arm){arm=1;e.target.textContent='Click again (clears answers)';setTimeout(()=>{arm=0;if(e.target.isConnected)e.target.textContent='Generate new practice set'},3500);return}S.fin=Object.assign(DEF().fin,{seed:2+Math.floor(Math.random()*9000),name:f.name});save();show('fin');refresh()};
+  if(f.res){$('#finText').value=summary();const rt=$('#finRetry');if(rt)rt.onclick=()=>{f.retry=true;f.res.forEach((r,i)=>{if(!r)delete f.ans[i]});save();show('fin');const w=f.res.findIndex(r=>!r);$('#fq'+w).scrollIntoView({block:'center'})};
+    $('#finName').oninput=e=>{f.name=e.target.value;save();$('#finText').value=summary()};
+    $('#finCopy').onclick=()=>{const t=$('#finText');t.value=summary();const ok=()=>$('#finMsg').textContent='Copied.',bad=()=>{t.focus();t.select();$('#finMsg').textContent='Press Ctrl+C (⌘C) to copy.'};try{navigator.clipboard.writeText(t.value).then(ok,bad)}catch(e){bad()}};
+    const pb=$('#finPrint');if(pb)pb.onclick=()=>{const w=window.open('','_blank');if(!w){$('#finMsg').textContent='Pop-ups are blocked. Use Copy summary instead.';return}w.document.write('<pre style="font:14px monospace;white-space:pre-wrap">'+esc(summary())+'</pre>');w.document.close();w.print()};
+    $('#finRep').addEventListener('click',e=>{const b=e.target.closest('[data-goto]');if(b)$('#fq'+b.dataset.goto).scrollIntoView({block:'center'})})}}
+
+/* ---------- nav ---------- */
+const MODS=[['m1','How many electrons?'],['m2','Build energy levels'],['m3','Write configurations'],['m4','Valence electrons'],['m5','Subshells & orbitals'],['m6','Configuration Detective'],['m7','Ions (extension)'],['fin','Final assessment']];
+const DONE={
+  m1:()=>mcOk(M1D,S.m1.disc)&&Object.values(S.m1.qok).filter(Boolean).length>=5,
+  m2:()=>[3,11,20].every(z=>S.m2.done[z])&&Object.keys(S.m2.done).length>=5&&!!S.m2.capOk,
+  m3:()=>Object.values(S.m3.st).filter(s=>s.solved).length>=6,
+  m4:()=>!!(S.m4.q1ok&&S.m4.perOk&&S.m4.chOk)&&mcOk(M4G,S.m4.grp),
+  m5:()=>Object.keys(S.m5.odone).length>=3&&!!S.m5.sOk&&!!S.m5.sDiagOk&&mcOk(M5MC,S.m5.mc),
+  m6:()=>!!S.m6.list&&Object.keys(S.m6.res).length>=15,
+  m7:()=>IONS.every((I,k)=>S.m7.done[k])&&mcOk(M7Q,S.m7.mc),
+  fin:()=>!!S.fin.res};
+const VIEWS={m1:[V_m1,wire_m1],m2:[V_m2,wire_m2],m3:[V_m3,wire_m3],m4:[V_m4,wire_m4],m5:[V_m5,wire_m5],m6:[V_m6,wire_m6],m7:[V_m7,wire_m7],fin:[V_fin,wire_fin]};
+function refresh(){$('#rail').innerHTML=MODS.map(([k,t],i)=>`<button data-nav="${k}" aria-current="${S.view===k}" class="${DONE[k]()?'done':''}"><span class="n">${k==='fin'?'Final':'Module '+(i+1)}${DONE[k]()?' ✓':''}</span><span class="t">${t}</span></button>`).join('');
+  const d=MODS.filter(([k])=>DONE[k]()).length;$('#progress').innerHTML=`<span class="lbl">Progress</span><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="8" aria-valuenow="${d}" aria-label="Modules complete"><i style="width:${d/8*100}%"></i></div><span class="lbl">${d} of 8 complete</span>`}
+function show(k){if(!VIEWS[k])k='m1';clearInterval(anim.t);S.view=k;save();$('#views').innerHTML=VIEWS[k][0]();VIEWS[k][1]();refresh();if(location.hash.slice(1)!==k){try{history.replaceState(null,'','#'+k)}catch(e){}}}
+document.addEventListener('click',e=>{const n=e.target.closest('[data-nav]');if(n){show(n.dataset.nav);return}
+  const r=e.target.closest('[data-reset]');if(r){if(!r.dataset.armed){r.dataset.armed='1';r.textContent='Click again to reset';setTimeout(()=>{if(r.isConnected){r.textContent='Reset';delete r.dataset.armed}},3500);return}const k=r.dataset.reset;S[k]=DEF()[k];save();show(k)}});
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(VIEWS[h]&&h!==S.view)show(h)});
+$('#lvlSel').value=String(S.level);$('#lvlSel').onchange=e=>{S.level=+e.target.value;save();show(S.view)};
+const applyMotion=()=>{document.body.classList.toggle('still',S.still);$('#motionBtn').setAttribute('aria-pressed',String(S.still));$('#motionBtn').textContent='Reduce motion: '+(S.still?'on':'off')};
+$('#motionBtn').onclick=()=>{S.still=!S.still;save();applyMotion()};
+$('#speakBtn').onclick=e=>{try{if(!('speechSynthesis' in window)||!window.speechSynthesis)throw 0;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(SPEAK[S.view]||'');u.rate=.95;speechSynthesis.speak(u)}catch(x){e.target.textContent='Read aloud unavailable'}};
+const VOCAB=[['Electron configuration','How an atom’s electrons are distributed among energy levels (2-8-1) or subshells (1s² 2s² 2p⁶ 3s¹).'],['Principal energy level (shell)','A main energy level, numbered n = 1, 2, 3, 4. It can hold up to 2n² electrons.'],['Valence electrons','Electrons in the outermost occupied energy level.'],['Subshell','A part of an energy level: s, p, d, or f.'],['Orbital','A region where up to two electrons are likely to be found.'],['Aufbau principle','Electrons fill lower-energy orbitals first.'],['Pauli exclusion principle','An orbital holds at most two electrons, with opposite spins.'],['Hund’s rule','Electrons occupy equal-energy orbitals singly before pairing.'],['Spin','A property of electrons shown as ↑ or ↓.'],['Ground state','The lowest-energy electron arrangement.'],['Ion','An atom that has gained or lost electrons and has a charge.'],['Group','A vertical column of the periodic table. Main-group elements in a group share a valence electron count.'],['Period','A horizontal row. Elements in a period have the same number of occupied energy levels.'],['Atomic number','The number of protons; in a neutral atom, also the number of electrons.']];
+$('#vocabList').innerHTML=VOCAB.map(([t,d])=>`<dt>${t}</dt><dd>${d}</dd>`).join('');
+const openV=o=>{$('#vocab').hidden=!o;$('#vocabBtn').setAttribute('aria-expanded',String(o));(o?$('#vocabClose'):$('#vocabBtn')).focus()};
+$('#vocabBtn').onclick=()=>openV($('#vocab').hidden);$('#vocabClose').onclick=()=>openV(false);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#vocab').hidden)openV(false)});
+applyMotion();const h0=location.hash.slice(1);show(VIEWS[h0]?h0:S.view);
+})();
+</script>
+
+</body>
+</html>
